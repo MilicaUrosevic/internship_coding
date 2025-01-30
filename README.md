@@ -1,2 +1,2 @@
 # internship_coding
-Place for organised work
+A place for organised work
