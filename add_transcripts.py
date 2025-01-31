@@ -64,7 +64,6 @@ COLUMN_NAMES = {
     'Species',
     'GeneID',
     'TranscriptID',
-    'ProteinID',
     'Strand',
     'ExonID',
     'ExonRank',
@@ -114,23 +113,11 @@ def _in(value, column):
 
 
 def _check_col_names(input_df):
-    # Normalize input table column names
-    input_columns = input_df.columns.str.strip().str.lower()
-    
-    # Normalize expected column names
-    expected_columns = {col.lower() for col in COLUMN_NAMES}
-    
-    print(f"Normalized input columns: {list(input_columns)}")
-    print(f"Normalized expected columns: {list(expected_columns)}")
-    
-    # Check for missing columns
-    for col in expected_columns:
-        if col not in input_columns:
+    for col in COLUMN_NAMES:
+        if col not in input_df.columns:
             raise Exception(f'The {col} column is missing in the input table.')
-    
-    # Warn about unused columns
-    for col in input_columns:
-        if col not in expected_columns:
+    for col in input_df.columns:
+        if col not in COLUMN_NAMES:
             logging.warning('The %s column is not going to be used', col)
 
 
@@ -149,8 +136,6 @@ def _format_df(data):
                     showindex=False)
 
 
-
-#  this is fine, only checks exon id
 def _check_exon(input_df, exontable):
     exon_columns = [
         'ExonRegionStart', 'ExonRegionEnd', 'GenomicCodingStart',
@@ -192,140 +177,130 @@ def _check_species_name(input_df):
 
 
 def _check_pair_order(input_df):
-    for index, row in input_df.iterrows():  # Use iterrows to loop through rows with their index
+    for row in input_df.itertuples():
         if row.ExonRegionStart > row.ExonRegionEnd:
             raise Exception(
-                f"Row {index}: ExonRegionStart ({row.ExonRegionStart}) should be less than ExonRegionEnd ({row.ExonRegionEnd})."
-            )
-        if row.GenomicCodingStart >= row.GenomicCodingEnd:
+                'ExonRegionStart should be lower than ExonRegionEnd.')
+        if row.GenomicCodingStart > row.GenomicCodingEnd:
             raise Exception(
-                f"Row {index}: GenomicCodingStart ({row.GenomicCodingStart}) should be less than GenomicCodingEnd ({row.GenomicCodingEnd})."
-            )
-        if len(row.NucleotideSequence) != (row.ExonRegionEnd - row.ExonRegionStart + 1):
+                'GenomicCodingStart should be lower than GenomicCodingEnd.')
+        if len(row.NucleotideSequence) != (row.ExonRegionEnd -
+                                           row.ExonRegionStart + 1):
             raise Exception(
-                f"Row {index}: The sequence length estimated using ExonRegionStart ({row.ExonRegionStart}) "
-                f"and ExonRegionEnd ({row.ExonRegionEnd}) disagrees with the actual NucleotideSequence length "
-                f"({len(row.NucleotideSequence)} vs {row.ExonRegionEnd - row.ExonRegionStart + 1})."
-            )
+                "The sequence length estimated using ExonRegionStart and "
+                "ExonRegionEnd disagrees with the actual NucleotideSequence "
+                "length.")
 
 
-# this function checks only the csv table
 def check_input(input_df, exontable):
+    """
+    It raises an error if there is a problem with the user-defined transcripts.
+    """
+    _check_col_names(input_df)
+    _check_species_name(input_df)
+    _check_transcript(input_df, exontable)
+    _check_pair_order(input_df)
+    _check_exon(input_df, exontable)
 
-  """  It raises an error if there is a problem with the user-defined transcripts. """
-  _check_col_names(input_df)
-  _check_species_name(input_df)
-  _check_transcript(input_df, exontable)
-  _check_pair_order(input_df)
-  _check_exon(input_df, exontable)
-
-
-def track_changes(file_path, description, delimiter=',', sep='\t'):
-    """Check and print the number of rows in a given file before and after operations."""
-    try:
-        if file_path.endswith('.csv'):
-            df = pd.read_csv(file_path, delimiter=delimiter)
-        elif file_path.endswith('.tsv'):
-            df = pd.read_csv(file_path, sep=sep)
-        else:
-            print(f"[WARNING] Unknown format for {file_path}, skipping tracking.")
-            return
-        
-        print(f"{description}: {file_path} -> {len(df)} rows")
-    except Exception as e:
-        print(f"[ERROR] Could not read {file_path}: {e}")
-
-
-
-#  THIS IS SUSPICIOUS, actually if GenomicCodingEnd or GenomicCodingEnd is NaN, everything else is supposed to be also NaN that includes them
-"""def add_to_exontable(input_df, exontable):
-    """ """
-    It adds the new exons and transcripts to the Ensembl's exontable.
-    also check these calculations
-    """ """
-    transcript_id = ""
-    cdna_start = 0
-    cdna_end = 0
-    for row in input_df.itertuples():
-        if transcript_id != row.TranscriptID or cdna_end == 0:
-            transcript_id = row.TranscriptID
-            coding_len = 0 if pd.isna(row.GenomicCodingStart) or pd.isna(row.GenomicCodingEnd) else row.GenomicCodingEnd - row.GenomicCodingStart
-            exon_len = row.ExonRegionEnd - row.ExonRegionStart
-            cdna_start = exon_len - coding_len + 1 if coding_len > 0 else np.nan
-            cdna_end = cdna_start + coding_len if coding_len > 0 else np.nan
-        else:
-            cdna_start = cdna_end + 1
-            cdna_end += (row.GenomicCodingEnd - row.GenomicCodingStart + 1)
-        exontable = pd.concat([exontable, pd.DataFrame([{
-            'GeneID': row.GeneID,
-            'TranscriptID': row.TranscriptID,
-            'ProteinID': row.ProteinID if pd.notna(row.ProteinID) else np.nan,
-            'Strand': row.Strand,
-            'ExonID': row.ExonID,
-            'ExonRegionStart': row.ExonRegionStart,
-            'ExonRegionEnd': row.ExonRegionEnd,
-            'ExonRank': row.ExonRank,
-            'cDNA_CodingStart': cdna_start,
-            'cDNA_CodingEnd': cdna_end,
-            'GenomicCodingStart': row.GenomicCodingStart if pd.notna(row.GenomicCodingStart) else np.nan,
-            'GenomicCodingEnd': row.GenomicCodingEnd if pd.notna(row.GenomicCodingEnd) else np.nan,
-            'StartPhase': row.StartPhase,
-            'EndPhase': row.EndPhase,
-        }])], ignore_index=True)
-
-    return exontable"""
 
 def add_to_exontable(input_df, exontable):
-    print(f"Before adding: {len(exontable)} rows")  # Broj redova pre dodavanja
-    
+    """
+    It adds the new exons and transcripts to the Ensembl's exontable.
+    """
     transcript_id = ""
     cdna_start = 0
     cdna_end = 0
+    transcript_id = ""
+    cdna_start = 0
+    cdna_end = 0
+    cdna_offset = {}  # Dictionary to store the cDNA offset per transcript
+
     for row in input_df.itertuples():
-        if transcript_id != row.TranscriptID or cdna_end == 0:
+        if transcript_id != row.TranscriptID:
+            # If we encounter a new transcript, reset values
             transcript_id = row.TranscriptID
-            coding_len = 0 if pd.isna(row.GenomicCodingStart) or pd.isna(row.GenomicCodingEnd) else row.GenomicCodingEnd - row.GenomicCodingStart
-            exon_len = row.ExonRegionEnd - row.ExonRegionStart
-            cdna_start = exon_len - coding_len + 1 if coding_len > 0 else np.nan
-            cdna_end = cdna_start + coding_len if coding_len > 0 else np.nan
-        else:
-            cdna_start = cdna_end + 1
-            cdna_end += (row.GenomicCodingEnd - row.GenomicCodingStart + 1)
+            cdna_start = 1  # cDNA numbering starts at 1
+            cdna_offset[transcript_id] = 0  # Reset offset for this transcript
         
-        if pd.isna(row.ExonID) or pd.isna(row.TranscriptID):
-            print(f"[WARNING] Skipping row because ExonID or TranscriptID is NaN: {row}")
-
+        exon_length = row.ExonRegionEnd - row.ExonRegionStart + 1
+        genomic_coding_length = row.GenomicCodingEnd - row.GenomicCodingStart + 1
         
-        before_concat = len(exontable)
-        exontable = pd.concat([exontable, pd.DataFrame([{
-            'GeneID': row.GeneID,
-            'TranscriptID': row.TranscriptID,
-            'ProteinID': row.ProteinID if pd.notna(row.ProteinID) else np.nan,
-            'Strand': row.Strand,
-            'ExonID': row.ExonID,
-            'ExonRegionStart': row.ExonRegionStart,
-            'ExonRegionEnd': row.ExonRegionEnd,
-            'ExonRank': row.ExonRank,
-            'cDNA_CodingStart': cdna_start,
-            'cDNA_CodingEnd': cdna_end,
-            'GenomicCodingStart': row.GenomicCodingStart if pd.notna(row.GenomicCodingStart) else np.nan,
-            'GenomicCodingEnd': row.GenomicCodingEnd if pd.notna(row.GenomicCodingEnd) else np.nan,
-            'StartPhase': row.StartPhase,
-            'EndPhase': row.EndPhase,
-    }])], ignore_index=True)
+        if row.Strand == "+1":  # Forward strand
+            if row.GenomicCodingStart >= row.ExonRegionStart and row.GenomicCodingEnd <= row.ExonRegionEnd:
+                # If the coding region is fully within the exon
+                cdna_start = cdna_offset[transcript_id] + (row.GenomicCodingStart - row.ExonRegionStart + 1)
+                cdna_end = cdna_start + genomic_coding_length - 1
+            else:
+                # If the exon contains part of the coding sequence
+                cdna_start = cdna_offset[transcript_id] + 1
+                cdna_end = cdna_start + exon_length - 1
+        else:  # Reverse strand
+            if row.GenomicCodingStart >= row.ExonRegionStart and row.GenomicCodingEnd <= row.ExonRegionEnd:
+                # If the coding region is fully within the exon
+                cdna_end = cdna_offset[transcript_id] + (row.ExonRegionEnd - row.GenomicCodingEnd + 1)
+                cdna_start = cdna_end - genomic_coding_length + 1
+            else:
+                # If the exon contains part of the coding sequence
+                cdna_end = cdna_offset[transcript_id] + exon_length
+                cdna_start = cdna_end - exon_length + 1
 
-    after_concat = len(exontable)
-    if after_concat == before_concat:
-        print(f"[WARNING] Row with ExonID={row.ExonID} and TranscriptID={row.TranscriptID} was not added!")
+        # Update the offset for the next exon of the same transcript
+        cdna_offset[transcript_id] = cdna_end  
 
+        # Store the calculated values in the DataFrame
+        input_df.at[row.Index, "cDNA_Coding_Start"] = cdna_start
+        input_df.at[row.Index, "cDNA_Coding_End"] = cdna_end
 
-    print(f"After adding: {len(exontable)} rows")  # Broj redova posle dodavanja
-    print(f"Before returning from add_to_exontable: {len(exontable)} rows")
-
+        exontable = exontable.append(
+            {
+                'GeneID': row.GeneID,
+                'TranscriptID': row.TranscriptID,
+                'ProteinID': f"{row.TranscriptID}_PROTEIN",
+                'Strand': row.Strand,
+                'ExonID': row.ExonID,
+                'ExonRegionStart': row.ExonRegionStart,
+                'ExonRegionEnd': row.ExonRegionEnd,
+                'ExonRank': row.ExonRank,
+                'cDNA_CodingStart': cdna_start,
+                'cDNA_CodingEnd': cdna_end,
+                'GenomicCodingStart': row.GenomicCodingStart,
+                'GenomicCodingEnd': row.GenomicCodingEnd,
+                'StartPhase': row.StartPhase,
+                'EndPhase': row.EndPhase,
+            },
+            ignore_index=True)
     return exontable
 
+def read_transcript_file(transcript_file):
+    """
+    Read the transcript CSV file and return a pandas DataFrame 
+    after removing rows with empty (NaN) values in any column.
+    """
+    # Read data from CSV
+    transcript_data = pd.read_csv(transcript_file, dtype=str)
 
-# CHECK THIS ALSO
+    # Drop rows with missing values in any column
+    transcript_data.dropna(inplace=True)
+
+    # Convert numeric columns back to their appropriate types
+    numeric_columns = [
+        'ExonRegionStart', 'ExonRegionEnd', 'GenomicCodingStart', 
+        'GenomicCodingEnd', 'StartPhase', 'EndPhase'
+    ]
+    
+    for col in numeric_columns:
+        if col in transcript_data.columns:
+            transcript_data[col] = pd.to_numeric(transcript_data[col])
+
+    # Sort data by GeneID, TranscriptID, and ExonRank (if present)
+    sort_columns = [col for col in ['GeneID', 'TranscriptID', 'ExonRank'] if col in transcript_data.columns]
+    
+    if sort_columns:
+        transcript_data.sort_values(by=sort_columns, inplace=True)
+
+    return transcript_data
+
+
 def add_to_tsl(input_df, tsl_df):
     """
     It adds the new transcripts to the TSL table downloaded from Ensembl.
@@ -370,74 +345,34 @@ def add_sequences(input_df, seqrecords):
                 f'{row.Species}:{row.GeneID} {row.ExonID} na:na:na:{row.ExonRegionStart}:{row.ExonRegionEnd}:{row.Strand}' # pylint: disable=line-too-long
             ))
 
-
 def main():
     """Main script function to add user transcript data."""
     args = parse_command_line().parse_args()
     paths = get_output_paths(args)
-    
-    print("Checking initial file sizes...")
-    track_changes(paths.input, "Initial input file")
-    track_changes(paths.exontable, "Initial exon table")
-    track_changes(paths.tsl, "Initial TSL table")
-    track_changes(paths.sequences, "Initial FASTA sequences")
-    
+
     print("Reading user input...")
-    input_df = pd.read_csv(paths.input, delimiter=',')  # changed
-    # Proveravamo koliko redova zapravo ima u fajlu
+    input_df = read_transcript_file(paths.input)  # using the new function
 
-    # Proveravamo koliko redova stvarno ima u fajlu pre nego što ga pročita read_exon_file
-    df_check = pd.read_csv(paths.exontable, sep='\t')
-    print(f"Directly reading exonstable.tsv (before read_exon_file): {len(df_check)} rows")
-
-    # Sada koristimo read_exon_file i proveravamo da li on skraćuje tabelu
     exontable = read_exon_file(paths.exontable)
-    print(f"After read_exon_file: {len(exontable)} rows")
-
     tsl_df = pd.read_csv(paths.tsl)
-    seqrecords = read_fasta(paths.sequences)
-
-    track_changes(paths.input, "After reading input file")
-    track_changes(paths.exontable, "After reading exon table")
-    track_changes(paths.tsl, "After reading TSL table")
-    track_changes(paths.sequences, "After reading FASTA sequences")
 
     print("Checking input...")
     check_input(input_df, exontable)
-    track_changes(paths.input, "After check_input")
 
     print("Adding new transcripts...")
     new_exontable = add_to_exontable(input_df, exontable)
-    track_changes(paths.exontable, "After add_to_exontable")
-
     new_tsl = add_to_tsl(input_df, tsl_df)
-    track_changes(paths.tsl, "After add_to_tsl")
 
-    print("Modifying sequences...")
+    seqrecords = read_fasta(paths.sequences)
     add_sequences(input_df, seqrecords)
-    track_changes(paths.sequences, "After add_sequences")
 
     print("Saving...")
     _write_fasta(paths.sequences, seqrecords)
-    
-    print(f"Before saving exonstable.tsv: {len(new_exontable)} rows")
-    print("NaN counts per column before saving:")
-    print(new_exontable.isnull().sum())  # Proveri koliko ima NaN vrednosti u svakoj koloni
-    print("Checking for duplicate rows before saving:")
-    print(new_exontable.duplicated().sum())  # Proveri broj duplikata
-
-    print("NaN counts per column before saving:")
-    print(new_exontable.isnull().sum())  # Proveri da li postoje NaN vrednosti u nekoj koloni
-
-
     new_tsl.to_csv(paths.tsl, index=False)
-    new_exontable.to_csv(paths.exontable, sep='\t', index=False, na_rep="NA")
-
-    track_changes(paths.tsl, "After saving TSL table")
-    track_changes(paths.exontable, "After saving exon table")
-    track_changes(paths.sequences, "After saving FASTA sequences")
+    new_exontable.to_csv(paths.exontable, sep='\t', index=False)
 
     print("Finished!")
+
 
 
 if __name__ == '__main__':
