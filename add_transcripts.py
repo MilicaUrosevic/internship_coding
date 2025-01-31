@@ -210,9 +210,6 @@ def add_to_exontable(input_df, exontable):
     transcript_id = ""
     cdna_start = 0
     cdna_end = 0
-    transcript_id = ""
-    cdna_start = 0
-    cdna_end = 0
     cdna_offset = {}  # Dictionary to store the cDNA offset per transcript
 
     for row in input_df.itertuples():
