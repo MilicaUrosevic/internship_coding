@@ -202,52 +202,36 @@ def check_input(input_df, exontable):
     _check_pair_order(input_df)
     _check_exon(input_df, exontable)
 
-
+"""
 def add_to_exontable(input_df, exontable):
-    """
-    It adds the new exons and transcripts to the Ensembl's exontable.
-    """
-    transcript_id = ""
-    cdna_start = 0
-    cdna_end = 0
-    cdna_offset = {}  # Dictionary to store the cDNA offset per transcript
-
+    """"""
+    It adds the new exons and transcripts to the Ensembl's exontable,
+    computing cDNA start and end values based on the given conditions.
+    """"""
+    
+    # Sort input dataframe by TranscriptID and ExonRank
+    input_df = input_df.sort_values(by=['TranscriptID', 'ExonRank']).reset_index(drop=True)
+    
+    transcript_id = None
+    exon_len_accumulator = 0  # Accumulates exon lengths when genomic_len is 0
+    
     for row in input_df.itertuples():
+        genomic_len = row.GenomicCodingEnd - row.GenomicCodingStart
+        exon_len = row.ExonRegionEnd - row.ExonRegionStart
+        
         if transcript_id != row.TranscriptID:
-            # If we encounter a new transcript, reset values
             transcript_id = row.TranscriptID
-            cdna_start = 1  # cDNA numbering starts at 1
-            cdna_offset[transcript_id] = 0  # Reset offset for this transcript
+            exon_len_accumulator = 0  # Reset for new transcript
         
-        exon_length = row.ExonRegionEnd - row.ExonRegionStart + 1
-        genomic_coding_length = row.GenomicCodingEnd - row.GenomicCodingStart + 1
+        if genomic_len == 0:
+            cdna_start = 0
+            cdna_end = 0
+            exon_len_accumulator += exon_len  # Accumulate exon length
+        else:
+            cdna_start = exon_len_accumulator + abs(row.GenomicCodingStart - row.ExonRegionStart) + 1
+            cdna_end = cdna_start + genomic_len
+            exon_len_accumulator += exon_len  # Update exon length accumulator
         
-        if row.Strand == "+1":  # Forward strand
-            if row.GenomicCodingStart >= row.ExonRegionStart and row.GenomicCodingEnd <= row.ExonRegionEnd:
-                # If the coding region is fully within the exon
-                cdna_start = cdna_offset[transcript_id] + (row.GenomicCodingStart - row.ExonRegionStart + 1)
-                cdna_end = cdna_start + genomic_coding_length - 1
-            else:
-                # If the exon contains part of the coding sequence
-                cdna_start = cdna_offset[transcript_id] + 1
-                cdna_end = cdna_start + exon_length - 1
-        else:  # Reverse strand
-            if row.GenomicCodingStart >= row.ExonRegionStart and row.GenomicCodingEnd <= row.ExonRegionEnd:
-                # If the coding region is fully within the exon
-                cdna_end = cdna_offset[transcript_id] + (row.ExonRegionEnd - row.GenomicCodingEnd + 1)
-                cdna_start = cdna_end - genomic_coding_length + 1
-            else:
-                # If the exon contains part of the coding sequence
-                cdna_end = cdna_offset[transcript_id] + exon_length
-                cdna_start = cdna_end - exon_length + 1
-
-        # Update the offset for the next exon of the same transcript
-        cdna_offset[transcript_id] = cdna_end  
-
-        # Store the calculated values in the DataFrame
-        input_df.at[row.Index, "cDNA_Coding_Start"] = cdna_start
-        input_df.at[row.Index, "cDNA_Coding_End"] = cdna_end
-
         exontable = exontable.append(
             {
                 'GeneID': row.GeneID,
@@ -265,37 +249,111 @@ def add_to_exontable(input_df, exontable):
                 'StartPhase': row.StartPhase,
                 'EndPhase': row.EndPhase,
             },
-            ignore_index=True)
-    return exontable
+            ignore_index=True
+        )
+    
+    return exontable"""
 
-def read_transcript_file(transcript_file):
-    """
-    Read the transcript CSV file and return a pandas DataFrame 
-    after removing rows with empty (NaN) values in any column.
-    """
-    # Read data from CSV
-    transcript_data = pd.read_csv(transcript_file, dtype=str)
+def calculate_cDNA_start_end(df):
+    # Sort by TranscriptID and ExonRank - done
+    df = df.sort_values(by=['TranscriptID', 'ExonRank']).copy()
+    
+    # Convert necessary columns to numeric type
+    numeric_columns = ['ExonRank', 'ExonRegionStart', 'ExonRegionEnd', 'GenomicCodingStart', 'GenomicCodingEnd', 'Strand']
+    for col in numeric_columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    # Initialize new columns
+    df['cDNA_CodingStart'] = np.nan
+    df['cDNA_CodingEnd'] = np.nan
+    
+    # Iterate through groups by TranscriptID
+    for transcript_id, transcript_group in df.groupby('TranscriptID'):
+        transcript_group = transcript_group.sort_values(by='ExonRank')
+        
+        cDNA_position = 1  # Reset start position for each transcript
+        cumulative_exon_length = 0  # Accumulate exon length before the first coding exon
+        found_coding_exon = False  # Track if the first coding exon is encountered
+        
+        for idx, row in transcript_group.iterrows():
+            if not found_coding_exon:
+                if pd.notna(row['GenomicCodingStart']) and pd.notna(row['GenomicCodingEnd']):
+                    # Adjust calculation based on strand direction 
+                    coding_length = abs(row['GenomicCodingEnd'] - row['GenomicCodingStart'])
+                   
+                    if row['Strand'] == 1:
+                        df.at[idx, 'cDNA_CodingStart'] = cumulative_exon_length + abs(row['GenomicCodingStart'] - row['ExonRegionStart']) + row['ExonRank']
+                        df.at[idx, 'cDNA_CodingEnd'] = df.at[idx, 'cDNA_CodingStart'] + coding_length
+                        cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
+                        found_coding_exon = True  # The first coding exon has been found
+                    elif row['Strand'] == -1:
+                        df.at[idx, 'cDNA_CodingStart'] = cumulative_exon_length + abs(row['GenomicCodingEnd'] - row['ExonRegionEnd']) + row['ExonRank']
+                        df.at[idx, 'cDNA_CodingEnd'] = df.at[idx, 'cDNA_CodingStart'] + coding_length
+                        cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
+                        found_coding_exon = True  # The first coding exon has been found
+                else:
+                    # Accumulate exon length before the coding exon
+                    cumulative_exon_length += abs(row['ExonRegionEnd'] - row['ExonRegionStart'])
+            else:
+                # Adjust calculation based on strand direction
+                
+                coding_length = abs(row['GenomicCodingEnd'] - row['GenomicCodingStart'])
+                df.at[idx, 'cDNA_CodingStart'] = cDNA_position
+                df.at[idx, 'cDNA_CodingEnd'] = cDNA_position + coding_length
+                cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
+    
+    return df
 
-    # Drop rows with missing values in any column
-    transcript_data.dropna(inplace=True)
 
-    # Convert numeric columns back to their appropriate types
+def add_to_exontable(input_df, exontable):
+    # First, calculate cDNA start and end values
+    input_df = calculate_cDNA_start_end(input_df)
+    
+    # Remove NaN values and convert numeric columns
+    input_df.dropna(inplace=True)
     numeric_columns = [
         'ExonRegionStart', 'ExonRegionEnd', 'GenomicCodingStart', 
-        'GenomicCodingEnd', 'StartPhase', 'EndPhase'
+        'GenomicCodingEnd', 'StartPhase', 'EndPhase', 'cDNA_CodingStart', 'cDNA_CodingEnd'
     ]
     
     for col in numeric_columns:
-        if col in transcript_data.columns:
-            transcript_data[col] = pd.to_numeric(transcript_data[col])
-
-    # Sort data by GeneID, TranscriptID, and ExonRank (if present)
-    sort_columns = [col for col in ['GeneID', 'TranscriptID', 'ExonRank'] if col in transcript_data.columns]
+        if col in input_df.columns:
+            input_df[col] = pd.to_numeric(input_df[col], errors='coerce').astype('Int64')
     
-    if sort_columns:
-        transcript_data.sort_values(by=sort_columns, inplace=True)
+    # Sort data
+    input_df = input_df.sort_values(by=['TranscriptID', 'ExonRank']).reset_index(drop=True)
+    
+    # Add data to exontable
+    for row in input_df.itertuples():
+        exontable = pd.concat([
+            exontable,
+            pd.DataFrame({
+                'GeneID': [row.GeneID],
+                'TranscriptID': [row.TranscriptID],
+                'ProteinID': [f"{row.TranscriptID}_PROTEIN"],
+                'Strand': [row.Strand],
+                'ExonID': [row.ExonID],
+                'ExonRegionStart': [row.ExonRegionStart],
+                'ExonRegionEnd': [row.ExonRegionEnd],
+                'ExonRank': [row.ExonRank],
+                'cDNA_CodingStart': [row.cDNA_CodingStart],
+                'cDNA_CodingEnd': [row.cDNA_CodingEnd],
+                'GenomicCodingStart': [row.GenomicCodingStart],
+                'GenomicCodingEnd': [row.GenomicCodingEnd],
+                'StartPhase': [row.StartPhase],
+                'EndPhase': [row.EndPhase],
+            })
+        ], ignore_index=True)
+    
+    return exontable
 
-    return transcript_data
+
+def read_transcript_file(transcript_file):
+    """
+    Read the transcript CSV file and return a pandas DataFrame without modifications.
+    """
+    # Read data from CSV
+    return pd.read_csv(transcript_file)
 
 
 def add_to_tsl(input_df, tsl_df):
@@ -348,7 +406,7 @@ def main():
     paths = get_output_paths(args)
 
     print("Reading user input...")
-    input_df = read_transcript_file(paths.input)  # using the new function
+    input_df = read_transcript_file(paths.input)  
 
     exontable = read_exon_file(paths.exontable)
     tsl_df = pd.read_csv(paths.tsl)
@@ -358,6 +416,7 @@ def main():
 
     print("Adding new transcripts...")
     new_exontable = add_to_exontable(input_df, exontable)
+
     new_tsl = add_to_tsl(input_df, tsl_df)
 
     seqrecords = read_fasta(paths.sequences)
