@@ -202,57 +202,6 @@ def check_input(input_df, exontable):
     _check_pair_order(input_df)
     _check_exon(input_df, exontable)
 
-"""
-def add_to_exontable(input_df, exontable):
-    """"""
-    It adds the new exons and transcripts to the Ensembl's exontable,
-    computing cDNA start and end values based on the given conditions.
-    """"""
-    
-    # Sort input dataframe by TranscriptID and ExonRank
-    input_df = input_df.sort_values(by=['TranscriptID', 'ExonRank']).reset_index(drop=True)
-    
-    transcript_id = None
-    exon_len_accumulator = 0  # Accumulates exon lengths when genomic_len is 0
-    
-    for row in input_df.itertuples():
-        genomic_len = row.GenomicCodingEnd - row.GenomicCodingStart
-        exon_len = row.ExonRegionEnd - row.ExonRegionStart
-        
-        if transcript_id != row.TranscriptID:
-            transcript_id = row.TranscriptID
-            exon_len_accumulator = 0  # Reset for new transcript
-        
-        if genomic_len == 0:
-            cdna_start = 0
-            cdna_end = 0
-            exon_len_accumulator += exon_len  # Accumulate exon length
-        else:
-            cdna_start = exon_len_accumulator + abs(row.GenomicCodingStart - row.ExonRegionStart) + 1
-            cdna_end = cdna_start + genomic_len
-            exon_len_accumulator += exon_len  # Update exon length accumulator
-        
-        exontable = exontable.append(
-            {
-                'GeneID': row.GeneID,
-                'TranscriptID': row.TranscriptID,
-                'ProteinID': f"{row.TranscriptID}_PROTEIN",
-                'Strand': row.Strand,
-                'ExonID': row.ExonID,
-                'ExonRegionStart': row.ExonRegionStart,
-                'ExonRegionEnd': row.ExonRegionEnd,
-                'ExonRank': row.ExonRank,
-                'cDNA_CodingStart': cdna_start,
-                'cDNA_CodingEnd': cdna_end,
-                'GenomicCodingStart': row.GenomicCodingStart,
-                'GenomicCodingEnd': row.GenomicCodingEnd,
-                'StartPhase': row.StartPhase,
-                'EndPhase': row.EndPhase,
-            },
-            ignore_index=True
-        )
-    
-    return exontable"""
 
 def calculate_cDNA_start_end(df):
     # Sort by TranscriptID and ExonRank - done
