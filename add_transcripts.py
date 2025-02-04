@@ -18,7 +18,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import SingleLetterAlphabet
 
 from tabulate import tabulate
-from thoraxe.transcript_info import read_exon_file
+#from thoraxe.transcript_info import read_exon_file
 from thoraxe.version import __version__
 
 
@@ -174,6 +174,9 @@ def _check_species_name(input_df):
                 f'Error with {name}:' +
                 'Species name should be binomial, and the terms should be '
                 f'separated by underscore, {example}')
+        
+
+
 
 
 def _check_pair_order(input_df):
@@ -247,19 +250,27 @@ def calculate_cDNA_start_end(df):
                 # Adjust calculation based on strand direction
                 
                 coding_length = abs(row['GenomicCodingEnd'] - row['GenomicCodingStart'])
-                df.at[idx, 'cDNA_CodingStart'] = cDNA_position
-                df.at[idx, 'cDNA_CodingEnd'] = cDNA_position + coding_length
-                cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
+                if not pd.isna(coding_length):  # check if not NaN
+                    df.at[idx, 'cDNA_CodingStart'] = cDNA_position
+                    df.at[idx, 'cDNA_CodingEnd'] = cDNA_position + coding_length
+                    cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
+
     
     return df
 
-
-def add_to_exontable(input_df, exontable):
+def clean_dataframe(input_df):
+    """
+    Cleans and prepares input DataFrame:
+    - Calculates cDNA start and end values
+    - Removes NaN values
+    - Converts numeric columns to Int64
+    - Sorts by TranscriptID and ExonRank
+    """
     # First, calculate cDNA start and end values
     input_df = calculate_cDNA_start_end(input_df)
     
     # Remove NaN values and convert numeric columns
-    input_df.dropna(inplace=True)
+    #input_df = input_df.dropna().copy()
     numeric_columns = [
         'ExonRegionStart', 'ExonRegionEnd', 'GenomicCodingStart', 
         'GenomicCodingEnd', 'StartPhase', 'EndPhase', 'cDNA_CodingStart', 'cDNA_CodingEnd'
@@ -272,8 +283,15 @@ def add_to_exontable(input_df, exontable):
     # Sort data
     input_df = input_df.sort_values(by=['TranscriptID', 'ExonRank']).reset_index(drop=True)
     
-    # Add data to exontable
-    for row in input_df.itertuples():
+    return input_df
+
+def merge_with_exontable(input_df, exontable):
+    """
+    Merges cleaned input_df with exontable.
+    """
+    input_df = input_df.sort_values(by=['TranscriptID', 'ExonRank']).reset_index(drop=True)
+
+    for row in input_df.itertuples(index=False):  # Dodato index=False
         exontable = pd.concat([
             exontable,
             pd.DataFrame({
@@ -285,17 +303,38 @@ def add_to_exontable(input_df, exontable):
                 'ExonRegionStart': [row.ExonRegionStart],
                 'ExonRegionEnd': [row.ExonRegionEnd],
                 'ExonRank': [row.ExonRank],
-                'cDNA_CodingStart': [row.cDNA_CodingStart],
-                'cDNA_CodingEnd': [row.cDNA_CodingEnd],
-                'GenomicCodingStart': [row.GenomicCodingStart],
-                'GenomicCodingEnd': [row.GenomicCodingEnd],
-                'StartPhase': [row.StartPhase],
-                'EndPhase': [row.EndPhase],
+                'cDNA_CodingStart': [getattr(row, 'cDNA_CodingStart', None)],  # Korišćenje getattr()
+                'cDNA_CodingEnd': [getattr(row, 'cDNA_CodingEnd', None)],
+                'GenomicCodingStart': [getattr(row, 'GenomicCodingStart', None)],
+                'GenomicCodingEnd': [getattr(row, 'GenomicCodingEnd', None)],
+                'StartPhase': [getattr(row, 'StartPhase', None)],
+                'EndPhase': [getattr(row, 'EndPhase', None)],
             })
         ], ignore_index=True)
-    
+
     return exontable
 
+
+def read_exon_file(exon_table_file):
+    """Read the exon_table_file and return a cleaned pandas DataFrame."""
+    
+    int_cols_with_nas = [
+        'cDNA_CodingStart', 'cDNA_CodingEnd', 'GenomicCodingStart',
+        'GenomicCodingEnd'
+    ]
+    
+    # Read CSV with dtype=str to avoid unwanted float conversion
+    exon_data = pd.read_csv(exon_table_file, sep='\t', dtype='string')
+
+    # Convert numeric columns to proper integer format, handling NaNs
+    for col in int_cols_with_nas:
+        if col in exon_data.columns:
+            exon_data[col] = pd.to_numeric(exon_data[col], errors='coerce').astype('Int64')
+
+    # Sort exon by rank in transcript
+    exon_data = exon_data.sort_values(by=['GeneID', 'TranscriptID', 'ExonRank']).reset_index(drop=True)
+    
+    return exon_data
 
 def read_transcript_file(transcript_file):
     """
@@ -310,27 +349,22 @@ def add_to_tsl(input_df, tsl_df):
     It adds the new transcripts to the TSL table downloaded from Ensembl.
     """
     subset = input_df[['Species', 'TranscriptID']].drop_duplicates()
-    for row in subset.itertuples():
-        tsl_df = tsl_df.append(
-            {
-                'Species':
-                row.Species,
-                'Name':
-                row.TranscriptID,
-                'TranscriptID':
-                row.TranscriptID,
-                'Source':
-                'user',
-                'ExperimentSource':
-                'user',
-                'Biotype':
-                'protein_coding',
-                'Flags':
-                np.nan,
-                'Version':
-                str(datetime.datetime.now().isoformat(timespec='hours')),
-            },
-            ignore_index=True)
+
+    # Create a new DataFrame to store the new transcript entries
+    new_entries = pd.DataFrame({
+        'Species': subset['Species'],
+        'Name': subset['TranscriptID'],
+        'TranscriptID': subset['TranscriptID'],
+        'Source': 'user',
+        'ExperimentSource': 'user',
+        'Biotype': 'protein_coding',
+        'Flags': np.nan,
+        'Version': datetime.datetime.now().isoformat(timespec='hours')
+    })
+
+    # Use pd.concat() correctly
+    tsl_df = pd.concat([tsl_df, new_entries], ignore_index=True)
+
     return tsl_df
 
 
@@ -363,8 +397,10 @@ def main():
     print("Checking input...")
     check_input(input_df, exontable)
 
+    input_df = clean_dataframe(input_df)
+
     print("Adding new transcripts...")
-    new_exontable = add_to_exontable(input_df, exontable)
+    new_exontable = merge_with_exontable(input_df, exontable)
 
     new_tsl = add_to_tsl(input_df, tsl_df)
 
