@@ -207,7 +207,7 @@ def check_input(input_df, exontable):
 
 
 def calculate_cDNA_start_end(df):
-    # Sort by TranscriptID and ExonRank - done
+    # Sort the dataframe by TranscriptID and ExonRank
     df = df.sort_values(by=['TranscriptID', 'ExonRank']).copy()
     
     # Convert necessary columns to numeric type
@@ -215,47 +215,56 @@ def calculate_cDNA_start_end(df):
     for col in numeric_columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # Initialize new columns
+    # Initialize cDNA coding start and end columns
     df['cDNA_CodingStart'] = np.nan
     df['cDNA_CodingEnd'] = np.nan
-    
-    # Iterate through groups by TranscriptID
+
+    # Process each transcript separately
     for transcript_id, transcript_group in df.groupby('TranscriptID'):
         transcript_group = transcript_group.sort_values(by='ExonRank')
-        
-        cDNA_position = 1  # Reset start position for each transcript
-        cumulative_exon_length = 0  # Accumulate exon length before the first coding exon
-        found_coding_exon = False  # Track if the first coding exon is encountered
-        
-        for idx, row in transcript_group.iterrows():
-            if not found_coding_exon:
-                if pd.notna(row['GenomicCodingStart']) and pd.notna(row['GenomicCodingEnd']):
-                    # Adjust calculation based on strand direction 
-                    coding_length = abs(row['GenomicCodingEnd'] - row['GenomicCodingStart'])
-                   
-                    if row['Strand'] == 1:
-                        df.at[idx, 'cDNA_CodingStart'] = cumulative_exon_length + abs(row['GenomicCodingStart'] - row['ExonRegionStart']) + row['ExonRank']
-                        df.at[idx, 'cDNA_CodingEnd'] = df.at[idx, 'cDNA_CodingStart'] + coding_length
-                        cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
-                        found_coding_exon = True  # The first coding exon has been found
-                    elif row['Strand'] == -1:
-                        df.at[idx, 'cDNA_CodingStart'] = cumulative_exon_length + abs(row['GenomicCodingEnd'] - row['ExonRegionEnd']) + row['ExonRank']
-                        df.at[idx, 'cDNA_CodingEnd'] = df.at[idx, 'cDNA_CodingStart'] + coding_length
-                        cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
-                        found_coding_exon = True  # The first coding exon has been found
-                else:
-                    # Accumulate exon length before the coding exon
-                    cumulative_exon_length += abs(row['ExonRegionEnd'] - row['ExonRegionStart'])
-            else:
-                # Adjust calculation based on strand direction
-                
-                coding_length = abs(row['GenomicCodingEnd'] - row['GenomicCodingStart'])
-                if not pd.isna(coding_length):  # check if not NaN
-                    df.at[idx, 'cDNA_CodingStart'] = cDNA_position
-                    df.at[idx, 'cDNA_CodingEnd'] = cDNA_position + coding_length
-                    cDNA_position = df.at[idx, 'cDNA_CodingEnd'] + 1
 
-    
+        # Compute exon lengths
+        exon_lengths = (transcript_group['ExonRegionEnd'] - transcript_group['ExonRegionStart'] + 1).values
+        
+        # Identify coding exons
+        is_coding_exon = transcript_group['GenomicCodingStart'].notna().values
+        
+        # Compute coding exon lengths
+        coding_lengths = np.zeros_like(exon_lengths)
+        coding_lengths[is_coding_exon] = (
+            transcript_group.loc[is_coding_exon, 'GenomicCodingEnd'] - 
+            transcript_group.loc[is_coding_exon, 'GenomicCodingStart'] + 1
+        ).values
+        
+        # Compute 3' non-coding region
+        nc_3_p = np.zeros_like(exon_lengths)
+        strand = transcript_group['Strand'].iloc[0]  # All exons share the same strand
+        
+        if strand == -1:
+            nc_3_p[is_coding_exon] = (
+                transcript_group.loc[is_coding_exon, 'ExonRegionStart'] - 
+                transcript_group.loc[is_coding_exon, 'GenomicCodingStart']
+            ).values
+        else:
+            nc_3_p[is_coding_exon] = (
+                transcript_group.loc[is_coding_exon, 'ExonRegionEnd'] - 
+                transcript_group.loc[is_coding_exon, 'GenomicCodingEnd']
+            ).values
+        
+        # Compute cumulative exon length
+        cum_exon_len = np.cumsum(exon_lengths)
+
+        # Compute cDNA coding start and end positions
+        cDNA_coding_start = np.full_like(exon_lengths, np.nan, dtype=float)
+        cDNA_coding_end = np.full_like(exon_lengths, np.nan, dtype=float)
+
+        cDNA_coding_start[is_coding_exon] = (cum_exon_len - coding_lengths - nc_3_p + 1)[is_coding_exon]
+        cDNA_coding_end[is_coding_exon] = (cum_exon_len - nc_3_p)[is_coding_exon]
+
+        # Assign values back to the dataframe
+        df.loc[transcript_group.index, 'cDNA_CodingStart'] = cDNA_coding_start
+        df.loc[transcript_group.index, 'cDNA_CodingEnd'] = cDNA_coding_end
+
     return df
 
 def clean_dataframe(input_df):
