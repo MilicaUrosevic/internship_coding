@@ -76,13 +76,17 @@ for row in exon_data:
             start_phase = previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1 + previous_end_phase) % 3
             previous_end_phase = end_phase
-    processed_data.append(row + [start_phase, end_phase])
+    new_row = list(row)  
+    new_row.insert(-1, start_phase)
+    new_row.insert(-1, end_phase)
+    
+    processed_data.append(new_row)
 
 # Convert to DataFrame and save
 columns = [
     "Species", "GeneID", "TranscriptID", "Strand", "ExonID", "ExonRank",
     "ExonRegionStart", "ExonRegionEnd", "GenomicCodingStart", "GenomicCodingEnd", 
-    "NucleotideSequence", "StartPhase", "EndPhase"
+    "StartPhase", "EndPhase", "NucleotideSequence"
 ]
 df = pd.DataFrame(processed_data, columns=columns)
 
