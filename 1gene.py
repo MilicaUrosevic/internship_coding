@@ -53,6 +53,11 @@ for exon in db.features_of_type("exon"):
     exon_sequence = genome_seq[exon_start - 1 : exon_end]
     if strand == "-":
         exon_sequence = exon_sequence.reverse_complement()
+
+    if strand == "-":
+        strand = -1
+    else:
+        strand = 1
     
     exon_data.append([
         "taeniopygia_guttata", target_gene_id, transcript_id, strand, exon.id, exon_rank,
@@ -90,6 +95,6 @@ columns = [
 ]
 df = pd.DataFrame(processed_data, columns=columns)
 
-output_file = f"optimized_exon_table_v15_{target_gene_id}.csv"
-df.to_csv(output_file, index=False)
+output_file = f"optimized_exon_table_v17_{target_gene_id}.csv"
+df.to_csv(output_file, index=False, sep=",")
 print(f"Table saved as {output_file}")
