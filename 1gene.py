@@ -15,17 +15,16 @@ except:
     db = gffutils.create_db(gtf_file, dbfn=db_path, force=True, keep_order=True, merge_strategy="merge", sort_attribute_values=True)
 
 # Load the reference genome
-genome_record = next(SeqIO.parse(genome_fasta, "fasta"))
-genome_seq = genome_record.seq  # Extract the full sequence
+genome_record = SeqIO.to_dict(SeqIO.parse(genome_fasta, "fasta"))
+
 
 cds_info = defaultdict(list)
 exon_data = []
 
-# Collect all CDS information for the target gene
 for feature in db.features_of_type("CDS"):
     if feature.attributes.get("gene_id", [""])[0] == target_gene_id:
         transcript_id = feature.attributes.get("transcript_id", [""])[0]
-        cds_info[transcript_id].append((feature.start, feature.end))
+        cds_info[transcript_id].append((feature.chrom, feature.start, feature.end))
 
 # Sort CDS regions per transcript
 for transcript in cds_info:
@@ -39,17 +38,18 @@ for exon in db.features_of_type("exon"):
     transcript_id = exon.attributes.get("transcript_id", [""])[0]
     exon_rank = exon.attributes.get("exon_number", [""])[0]
     strand = exon.strand
-    exon_start, exon_end = exon.start, exon.end
+    exon_start, exon_end, chrom = exon.start, exon.end, exon.chrom
     
     # Find the first CDS within this exon
     cds_start_coord, cds_end_coord = "NA", "NA"
     if transcript_id in cds_info:
-        for cds_start, cds_end in cds_info[transcript_id]:
+        for chrom, cds_start, cds_end in cds_info[transcript_id]:
             if exon_start <= cds_start <= cds_end <= exon_end:
                 cds_start_coord, cds_end_coord = cds_start, cds_end
                 break
     
     # Retrieve exon sequence
+    genome_seq = genome_record[chrom].seq
     exon_sequence = genome_seq[exon_start - 1 : exon_end]
     if strand == "-":
         exon_sequence = exon_sequence.reverse_complement()
@@ -90,6 +90,6 @@ columns = [
 ]
 df = pd.DataFrame(processed_data, columns=columns)
 
-output_file = f"optimized_exon_table_v8_{target_gene_id}.csv"
+output_file = f"optimized_exon_table_v15_{target_gene_id}.csv"
 df.to_csv(output_file, index=False)
 print(f"Table saved as {output_file}")
