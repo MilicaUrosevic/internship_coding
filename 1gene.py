@@ -2,6 +2,7 @@ import gffutils
 import pandas as pd
 from Bio import SeqIO
 from collections import defaultdict
+import numpy as np
 
 # Define input files
 gtf_file = "/Users/milicaurosevic/Downloads/Taeniopygia_guttata.bTaeGut1_v1.p.113-2.gtf"
@@ -19,12 +20,21 @@ genome_record = SeqIO.to_dict(SeqIO.parse(genome_fasta, "fasta"))
 
 
 cds_info = defaultdict(list)
+stop_codon_info = defaultdict(list)
 exon_data = []
 
 for feature in db.features_of_type("CDS"):
     if feature.attributes.get("gene_id", [""])[0] == target_gene_id:
         transcript_id = feature.attributes.get("transcript_id", [""])[0]
         cds_info[transcript_id].append((feature.chrom, feature.start, feature.end))
+
+
+# Extract stop codons for the target gene
+for feature in db.features_of_type("stop_codon"):
+    if feature.attributes.get("gene_id", [""])[0] == target_gene_id:
+        transcript_id = feature.attributes.get("transcript_id", [""])[0]
+        stop_codon_info[transcript_id].append((feature.start, feature.end))
+
 
 # Sort CDS regions per transcript
 for transcript in cds_info:
@@ -41,12 +51,18 @@ for exon in db.features_of_type("exon"):
     exon_start, exon_end, chrom = exon.start, exon.end, exon.chrom
     
     # Find the first CDS within this exon
-    cds_start_coord, cds_end_coord = "NA", "NA"
+    cds_start_coord, cds_end_coord = np.nan, np.nan
     if transcript_id in cds_info:
         for chrom, cds_start, cds_end in cds_info[transcript_id]:
             if exon_start <= cds_start <= cds_end <= exon_end:
                 cds_start_coord, cds_end_coord = cds_start, cds_end
+                # Check if a stop codon follows this CDS
+                if transcript_id in stop_codon_info:
+                    for stop_codon_start, stop_codon_end in stop_codon_info[transcript_id]:
+                        if cds_end + 1 == stop_codon_start:
+                            cds_end_coord = stop_codon_end  # Extend CDS end to stop codon end
                 break
+
     
     # Retrieve exon sequence
     genome_seq = genome_record[chrom].seq
@@ -65,14 +81,13 @@ for exon in db.features_of_type("exon"):
     ])
 
 # Compute start and end phase
-processed_data = []
 previous_end_phase = -1
-start_phase = -1
+processed_data = []
 for row in exon_data:
     species, gene_id, transcript_id, strand, exon_id, exon_rank, exon_start, exon_end, cds_start, cds_end, seq = row
     end_phase = -1
-    
-    if cds_start != "NA" and cds_end != "NA":
+    start_phase = -1
+    if not np.isnan(cds_start) and not np.isnan(cds_end):
         if previous_end_phase == -1:
             start_phase = -1
             end_phase = (int(cds_end) - int(cds_start) + 1) % 3
@@ -81,6 +96,10 @@ for row in exon_data:
             start_phase = previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1 + previous_end_phase) % 3
             previous_end_phase = end_phase
+    else:
+        next
+
+    
     new_row = list(row)  
     new_row.insert(-1, start_phase)
     new_row.insert(-1, end_phase)
@@ -95,6 +114,6 @@ columns = [
 ]
 df = pd.DataFrame(processed_data, columns=columns)
 
-output_file = f"optimized_exon_table_v17_{target_gene_id}.csv"
+output_file = f"zebrafinch2{target_gene_id}.csv"
 df.to_csv(output_file, index=False, sep=",")
 print(f"Table saved as {output_file}")
