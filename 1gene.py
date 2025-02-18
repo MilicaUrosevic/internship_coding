@@ -80,39 +80,40 @@ for exon in db.features_of_type("exon"):
         exon_start, exon_end, cds_start_coord, cds_end_coord, str(exon_sequence)
     ])
 
-# Compute start and end phase
-previous_end_phase = -1
-processed_data = []
-previous_transcript_id = None  
 
-for row in exon_data:
+# Calculate start and end phase
+processed_data = []
+previous_end_phase = -1  # initialization for previous end phase
+
+for i, row in enumerate(exon_data):
     species, gene_id, transcript_id, strand, exon_id, exon_rank, exon_start, exon_end, cds_start, cds_end, seq = row
     start_phase = end_phase = -1  
 
-    if not np.isnan(cds_start) and not np.isnan(cds_end):
+    #check if it is the last exon of a transcript
+    is_last_exon = (i == len(exon_data) - 1) or (exon_data[i + 1][2] != transcript_id)
+    
+    if cds_start is not None and cds_end is not None and not np.isnan(cds_start) and not np.isnan(cds_end):
         if previous_end_phase == -1:
-            start_phase=previous_end_phase
+            start_phase = previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1) % 3
         else:
             start_phase = previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1 + previous_end_phase) % 3
+
+        if is_last_exon:
+            end_phase = -1
+            if cds_end == exon_end:
+                end_phase = 0
+
         previous_end_phase = end_phase
     else:
         previous_end_phase = -1
 
-        
-        
-    
-    previous_transcript_id = transcript_id 
-
-
-
-    
     new_row = list(row)  
-    new_row.insert(-1, start_phase)
-    new_row.insert(-1, end_phase)
+    new_row.insert(-1, start_phase) 
+    new_row.insert(-1, end_phase)    
     
-    processed_data.append(new_row)
+    processed_data.append(new_row)  
 
 # Convert to DataFrame and save
 columns = [
