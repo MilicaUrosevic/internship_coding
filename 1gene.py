@@ -83,21 +83,29 @@ for exon in db.features_of_type("exon"):
 # Compute start and end phase
 previous_end_phase = -1
 processed_data = []
+previous_transcript_id = None  
+
 for row in exon_data:
     species, gene_id, transcript_id, strand, exon_id, exon_rank, exon_start, exon_end, cds_start, cds_end, seq = row
-    end_phase = -1
-    start_phase = -1
+    start_phase = end_phase = -1  
+
     if not np.isnan(cds_start) and not np.isnan(cds_end):
         if previous_end_phase == -1:
-            start_phase = -1
+            start_phase=previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1) % 3
-            previous_end_phase = end_phase
         else:
             start_phase = previous_end_phase
             end_phase = (int(cds_end) - int(cds_start) + 1 + previous_end_phase) % 3
-            previous_end_phase = end_phase
+        previous_end_phase = end_phase
     else:
-        next
+        previous_end_phase = -1
+
+        
+        
+    
+    previous_transcript_id = transcript_id 
+
+
 
     
     new_row = list(row)  
@@ -114,6 +122,6 @@ columns = [
 ]
 df = pd.DataFrame(processed_data, columns=columns)
 
-output_file = f"zebrafinch2{target_gene_id}.csv"
+output_file = f"zebrafinch6{target_gene_id}.csv"
 df.to_csv(output_file, index=False, sep=",")
 print(f"Table saved as {output_file}")
