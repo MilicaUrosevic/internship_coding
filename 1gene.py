@@ -102,8 +102,6 @@ for i, row in enumerate(exon_data):
 
         if is_last_exon:
             end_phase = -1
-            if cds_end == exon_end:
-                end_phase = 0
 
         previous_end_phase = end_phase
     else:
