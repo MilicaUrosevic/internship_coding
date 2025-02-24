@@ -1,0 +1,503 @@
+    1  ls -l mpi_hello.py
+    2  open mpi_hello.py
+    3  cat mpi_hello.py
+    4  cd ..
+    5  exit
+    6  scp mpi_test.py urosevim@mc-login1.university.edu:~/
+    7  exit
+    8  nano submit.sh
+    9  sbatch submit.sh
+   10  mpirun -np 4 python mpi_test.py
+   11  module avail
+   12  module load openmpi
+   13  module spider mpi
+   14  module load gcc-openmpi
+   15  exit
+   16  pwd
+   17  ls
+   18  module avail
+   19  module load R/4.4.1/gcc-openmpi
+   20  mpicc --version
+   21  mpirun --version
+   22  nano mpi_hello.c
+   23  mpicc -o mpi_hello mpi_hello.c
+   24  mpirun -np 4 ./mpi_hello
+   25  nano mpi_hello.py
+   26  python -m pip list | grep mpi4py
+   27  pip install --user mpi4py
+   28  mpirun -np 4 python mpi_hello.py
+   29  module avail
+   30  module load mpi/openmpi/4.1.6/gcc
+   31  which mpirun
+   32  module load samtools
+   33  module load bedtools
+   34  module load mpi/openmpi/4.1.6/gcc
+   35  module load python/3.12.5   # Ili verzija koja postoji na klasteru
+   36  module load fastq-dump      # Ako postoji, ako ne – instaliraćeš ga drugačije
+   37  module load minimap2
+   38  module load samtools
+   39  module load mpi/openmpi/4.1.6/gcc
+   40  module load python/3.12.5
+   41  module load fastq-dump
+   42  mkdir -p ~/sra-tools
+   43  cd ~/sra-tools
+   44  wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+   45  tar -xvzf sratoolkit.current-ubuntu64.tar.gz
+   46  export PATH=~/sra-tools/sratoolkit.3.0.0-ubuntu64/bin:$PATH
+   47  fastq-dump --version
+   48  cd ..
+   49  fasta-dump --version
+   50  cd ~/sra-tools
+   51  ls -l sratoolkit*/
+   52  cd sratoolkit.3.0.0-ubuntu64/bin
+   53  cd ~/sra-tools/bin
+   54  cd bin
+   55  ls
+   56  cd sratoolkit.3.2.0-ubuntu64
+   57  ls
+   58  cd bin
+   59  ls
+   60  fasta-dump --version
+   61  fastq-dump --version
+   62  fastq-dump -version
+   63  fastq-dump --version
+   64  help
+   65  ~/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump --version
+   66  cd ..
+   67  module avail minimap2
+   68  mkdir -p ~/tools
+   69  cd ~/tools
+   70  wget https://github.com/lh3/minimap2/releases/download/v2.24/minimap2-2.24_x64-linux.tar.bz2
+   71  tar -xvf minimap2-2.24_x64-linux.tar.bz2
+   72  mv minimap2-2.24_x64-linux minimap2
+   73  export PATH=~/tools/minimap2:$PATH
+   74  echo 'export PATH=~/tools/minimap2:$PATH' >> ~/.bashrc
+   75  source ~/.bashrc
+   76  minimap2 --version
+   77  cd ~/tools
+   78  wget https://github.com/samtools/samtools/releases/download/1.20/samtools-1.20.tar.bz2
+   79  tar -xvf samtools-1.20.tar.bz2
+   80  cd samtools-1.20
+   81  ./configure --prefix=$HOME/tools/samtools
+   82  make
+   83  make install
+   84  export PATH=~/tools/samtools/bin:$PATH
+   85  echo 'export PATH=~/tools/samtools/bin:$PATH' >> ~/.bashrc
+   86  source ~/.bashrc
+   87  samtools --version
+   88  cd ..
+   89  cd ~/tools
+   90  wget https://github.com/shenwei356/seqkit/releases/download/v2.5.1/seqkit_linux_amd64.tar.gz
+   91  tar -xvf seqkit_linux_amd64.tar.gz
+   92  mv seqkit ~/tools/
+   93  chmod +x ~/tools/seqkit
+   94  export PATH=~/tools:$PATH
+   95  echo 'export PATH=~/tools:$PATH' >> ~/.bashrc
+   96  source ~/.bashrc
+   97  seqkit version
+   98  cd ~/tools
+   99  wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2.31.1.tar.gz
+  100  tar -xvf bedtools-2.31.1.tar.gz
+  101  cd bedtools2
+  102  make
+  103  bedtools --version
+  104  cd ..
+  105  bedtools --version
+  106  cd bedtools2
+  107  export PATH=~/tools/bedtools2/bin:$PATH
+  108  echo 'export PATH=~/tools/bedtools2/bin:$PATH' >> ~/.bashrc
+  109  source ~/.bashrc
+  110  bedtools --version
+  111  cd ..
+  112  minimap2 --version
+  113  samtools --version
+  114  seqkit version
+  115  bedtools --version
+  116  exit
+  117  find ~/tools/bedtools2/ -name "bedtools"
+  118  ls -l ~/tools/bedtools2/
+  119  export PATH=~/tools/bedtools2/bin:$PATH
+  120  bedtools --version
+  121  echo 'export PATH=~/tools/bedtools2/bin:$PATH' >> ~/.bashrc
+  122  source ~/.bashrc
+  123  minimap2 --version
+  124  samtools --version
+  125  seqkit version
+  126  bedtools --version
+  127  mkdir -p ~/tools/ucsc
+  128  cd ~/tools/ucsc
+  129  wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedToGenePred
+  130  wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/genePredToGtf
+  131  chmod +x bedToGenePred
+  132  chmod +x genePredToGtf
+  133  export PATH=~/tools/ucsc:$PATH
+  134  echo 'export PATH=~/tools/ucsc:$PATH' >> ~/.bashrc
+  135  source ~/.bashrc
+  136  bedToGenePred --help
+  137  genePredToGtf --help
+  138  bedToGenePred
+  139  genePredToGtf
+  140  bedToGenePred input.bed output.genePred
+  141  DATA="." 
+  142  SPECIES="zf" 
+  143  FASTQ="SRR8551562" 
+  144  PLATFORM="pacbio"
+  145  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  146  FASTA=all_${SPECIES}_genes
+  147  MAPPINGDIR=${DATA}/${SPECIES}/${PLATFORM}/${FASTQ}
+  148  MAPPING=${FASTA}-vs-${FASTQ}
+  149  echo $FASTADIR
+  150  echo $MAPPINGDIR
+  151  cd ..
+  152  rm -rf ./zf/zf_gene_fasta_files
+  153  ./zf/pacbio/SRR8551562
+  154  ls
+  155  cd ucsc
+  156  ls
+  157  cd ..
+  158  DATA="." 
+  159  SPECIES="zf" 
+  160  FASTQ="SRR8551562" 
+  161  PLATFORM="pacbio"
+  162  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  163  FASTA=all_${SPECIES}_genes
+  164  MAPPINGDIR=${DATA}/${SPECIES}/${PLATFORM}/${FASTQ}
+  165  MAPPING=${FASTA}-vs-${FASTQ}
+  166  echo $FASTADIR
+  167  echo $MAPPINGDIR
+  168  SPECIES="hs"
+  169  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  170  mkdir -p ${FASTADIR}
+  171  for gid in ENSG00000107643 ENSG00000050748 ENSG00000128641 ENSG00000010810 ENSG00000058404 ENSG00000140416 ENSG00000148737 ENSG00000197122 ENSG00000187122 ENSG00000169855 ENSG00000185008 ENSG00000092421 ENSG00000139220; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/$gid.fasta; done
+  172  SPECIES="mm"
+  173  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  174  mkdir -p ${FASTADIR}
+  175  for gid in ENSMUSG00000021936 ENSMUSG00000020366 ENSMUSG00000018417 ENSMUSG00000019843 ENSMUSG00000057897 ENSMUSG00000032366 ENSMUSG00000024985 ENSMUSG00000027646 ENSMUSG00000025020 ENSMUSG00000022883 ENSMUSG00000052516 ENSMUSG00000019647 ENSMUSG00000053825; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/${gid}.fasta; done
+  176  SPECIES="zf"
+  177  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  178  mkdir -p ${FASTADIR}
+  179  for gid in ENSTGUG00000008103 ENSTGUG00000023050 ENSTGUG00000010724 ENSTGUG00000011998 ENSTGUG00000003464 ENSTGUG00000005002 ENSTGUG00000010805 ENSTGUG00000004937 ENSTGUG00000009734 ENSTGUG00000013537 ENSTGUG00000013538 ENSTGUG00000017547 ENSTGUG00000007778; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/${gid}.fasta; done
+  180  ls -lh ${FASTADIR}
+  181  mkdir -p ${MAPPINGDIR}
+  182  fastq-dump --gzip --skip-technical --readids --dumpbase --clip --outdir ${MAPPINGDIR} ${FASTQ}
+  183  ~/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump --version
+  184  ~/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump --gzip --skip-technical --readids --dumpbase --clip --outdir ${MAPPINGDIR} ${FASTQ}
+  185  cat ${FASTADIR}/ENS*.fasta > ${FASTADIR}/${FASTA}.fasta
+  186  ls -lh ${MAPPINGDIR}
+  187  ls -lh ${FASTADIR}/${FASTA}.fasta
+  188  head ${FASTADIR}/${FASTA}.fasta
+  189  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  190  ls
+  191  cd tools
+  192  ls
+  193  cd ..
+  194  cd sra-tools
+  195  ls
+  196  cd ..
+  197  cd zf
+  198  ls
+  199  cd ./zf/pacbio/SRR8551562
+  200  -bash: ./zf/pacbio/SRR8551562: No such file or directory
+  201  [urosevim@mc-login2 tools]$ ls
+  202  bedtools2                        samtools-1.20
+  203  bedtools-2.31.1.tar.gz           samtools-1.20.tar.bz2
+  204  minimap2                         seqkit
+  205  minimap2-2.24_x64-linux.tar.bz2  seqkit_linux_amd64.tar.gz
+  206  samtools                         ucsc
+  207  [urosevim@mc-login2 tools]$ cd ucsc
+  208  [urosevim@mc-login2 ucsc]$ ls
+  209  bedToGenePred  genePredToGtf
+  210  [urosevim@mc-login2 ucsc]$ cd ..
+  211  [urosevim@mc-login2 tools]$ cd ..
+  212  [urosevim@mc-login2 ~]$ DATA="." 
+  213  SPECIES="zf" 
+  214  FASTQ="SRR8551562" 
+  215  PLATFORM="pacbio"
+  216  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  217  FASTA=all_${SPECIES}_genes
+  218  MAPPINGDIR=${DATA}/${SPECIES}/${PLATFORM}/${FASTQ}
+  219  MAPPING=${FASTA}-vs-${FASTQ}
+  220  [urosevim@mc-login2 ~]$ echo $FASTADIR
+  221  echo $MAPPINGDIR
+  222  ./zf/zf_gene_fasta_files
+  223  ./zf/pacbio/SRR8551562
+  224  [urosevim@mc-login2 ~]$ SPECIES="hs"
+  225  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  226  mkdir -p ${FASTADIR}
+  227  for gid in ENSG00000107643 ENSG00000050748 ENSG00000128641 ENSG00000010810 ENSG00000058404 ENSG00000140416 ENSG00000148737 ENSG00000197122 ENSG00000187122 ENSG00000169855 ENSG00000185008 ENSG00000092421 ENSG00000139220; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/$gid.fasta; done
+  228    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  229                                   Dload  Upload   Total   Spent    Left  Speed
+  230  100  131k  100  131k    0     0   472k      0 --:--:-- --:--:-- --:--:--  472k
+  231    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  232                                   Dload  Upload   Total   Spent    Left  Speed
+  233  100 60003  100 60003    0     0   260k      0 --:--:-- --:--:-- --:--:--  259k
+  234    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  235                                   Dload  Upload   Total   Spent    Left  Speed
+  236  100  178k  100  178k    0     0   410k      0 --:--:-- --:--:-- --:--:--  410k
+  237    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  238                                   Dload  Upload   Total   Spent    Left  Speed
+  239  100  211k  100  211k    0     0   878k      0 --:--:-- --:--:-- --:--:--  878k
+  240    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  241                                   Dload  Upload   Total   Spent    Left  Speed
+  242  100  123k  100  123k    0     0   570k      0 --:--:-- --:--:-- --:--:--  567k
+  243    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  244                                   Dload  Upload   Total   Spent    Left  Speed
+  245  100 29846  100 29846    0     0   155k      0 --:--:-- --:--:-- --:--:--  155k
+  246    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  247                                   Dload  Upload   Total   Spent    Left  Speed
+  248  100  215k  100  215k    0     0   972k      0 --:--:-- --:--:-- --:--:--  972k
+  249    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  250                                   Dload  Upload   Total   Spent    Left  Speed
+  251  100 62450  100 62450    0     0   317k      0 --:--:-- --:--:-- --:--:--  317k
+  252    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  253                                   Dload  Upload   Total   Spent    Left  Speed
+  254  100  186k  100  186k    0     0   868k      0 --:--:-- --:--:-- --:--:--  868k
+  255    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  256                                   Dload  Upload   Total   Spent    Left  Speed
+  257  100 1162k  100 1162k    0     0  2690k      0 --:--:-- --:--:-- --:--:-- 2684k
+  258    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  259                                   Dload  Upload   Total   Spent    Left  Speed
+  260  100 1730k  100 1730k    0     0  1946k      0 --:--:-- --:--:-- --:--:-- 1944k
+  261    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  262                                   Dload  Upload   Total   Spent    Left  Speed
+  263  100  130k  100  130k    0     0   465k      0 --:--:-- --:--:-- --:--:--  465k
+  264    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  265                                   Dload  Upload   Total   Spent    Left  Speed
+  266  100  498k  100  498k    0     0  1705k      0 --:--:-- --:--:-- --:--:-- 1705k
+  267  [urosevim@mc-login2 ~]$ SPECIES="mm"
+  268  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  269  mkdir -p ${FASTADIR}
+  270  for gid in ENSMUSG00000021936 ENSMUSG00000020366 ENSMUSG00000018417 ENSMUSG00000019843 ENSMUSG00000057897 ENSMUSG00000032366 ENSMUSG00000024985 ENSMUSG00000027646 ENSMUSG00000025020 ENSMUSG00000022883 ENSMUSG00000052516 ENSMUSG00000019647 ENSMUSG00000053825; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/${gid}.fasta; done
+  271    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  272                                   Dload  Upload   Total   Spent    Left  Speed
+  273  100 70481  100 70481    0     0   374k      0 --:--:-- --:--:-- --:--:--  372k
+  274    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  275                                   Dload  Upload   Total   Spent    Left  Speed
+  276  100 40397  100 40397    0     0   184k      0 --:--:-- --:--:-- --:--:--  184k
+  277    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  278                                   Dload  Upload   Total   Spent    Left  Speed
+  279  100  165k  100  165k    0     0   696k      0 --:--:-- --:--:-- --:--:--  696k
+  280    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  281                                   Dload  Upload   Total   Spent    Left  Speed
+  282  100  195k  100  195k    0     0   830k      0 --:--:-- --:--:-- --:--:--  830k
+  283    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  284                                   Dload  Upload   Total   Spent    Left  Speed
+  285  100 98394  100 98394    0     0   475k      0 --:--:-- --:--:-- --:--:--  475k
+  286    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  287                                   Dload  Upload   Total   Spent    Left  Speed
+  288  100 27328  100 27328    0     0   158k      0 --:--:-- --:--:-- --:--:--  157k
+  289    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  290                                   Dload  Upload   Total   Spent    Left  Speed
+  291  100  190k  100  190k    0     0   846k      0 --:--:-- --:--:-- --:--:--  846k
+  292    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  293                                   Dload  Upload   Total   Spent    Left  Speed
+  294  100 54375  100 54375    0     0   244k      0 --:--:-- --:--:-- --:--:--  244k
+  295    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  296                                   Dload  Upload   Total   Spent    Left  Speed
+  297  100  142k  100  142k    0     0   556k      0 --:--:-- --:--:-- --:--:--  556k
+  298    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  299                                   Dload  Upload   Total   Spent    Left  Speed
+  300  100  732k  100  732k    0     0  2173k      0 --:--:-- --:--:-- --:--:-- 2167k
+  301    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  302                                   Dload  Upload   Total   Spent    Left  Speed
+  303  100 1192k  100 1192k    0     0  3294k      0 --:--:-- --:--:-- --:--:-- 3294k
+  304    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  305                                   Dload  Upload   Total   Spent    Left  Speed
+  306  100  132k  100  132k    0     0   549k      0 --:--:-- --:--:-- --:--:--  549k
+  307    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  308                                   Dload  Upload   Total   Spent    Left  Speed
+  309  100  462k  100  462k    0     0  1605k      0 --:--:-- --:--:-- --:--:-- 1599k
+  310  [urosevim@mc-login2 ~]$ SPECIES="zf"
+  311  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  312  mkdir -p ${FASTADIR}
+  313  for gid in ENSTGUG00000008103 ENSTGUG00000023050 ENSTGUG00000010724 ENSTGUG00000011998 ENSTGUG00000003464 ENSTGUG00000005002 ENSTGUG00000010805 ENSTGUG00000004937 ENSTGUG00000009734 ENSTGUG00000013537 ENSTGUG00000013538 ENSTGUG00000017547 ENSTGUG00000007778; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/${gid}.fasta; done
+  314    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  315                                   Dload  Upload   Total   Spent    Left  Speed
+  316  100 39870  100 39870    0     0  48385      0 --:--:-- --:--:-- --:--:-- 48327
+  317    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  318                                   Dload  Upload   Total   Spent    Left  Speed
+  319  100 26793  100 26793    0     0   113k      0 --:--:-- --:--:-- --:--:--  113k
+  320    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  321                                   Dload  Upload   Total   Spent    Left  Speed
+  322  100  139k  100  139k    0     0   298k      0 --:--:-- --:--:-- --:--:--  298k
+  323    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  324                                   Dload  Upload   Total   Spent    Left  Speed
+  325  100  135k  100  135k    0     0   183k      0 --:--:-- --:--:-- --:--:--  182k
+  326    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  327                                   Dload  Upload   Total   Spent    Left  Speed
+  328  100 19166  100 19166    0     0  88322      0 --:--:-- --:--:-- --:--:-- 88322
+  329    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  330                                   Dload  Upload   Total   Spent    Left  Speed
+  331  100 59517  100 59517    0     0  74489      0 --:--:-- --:--:-- --:--:-- 74396
+  332    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  333                                   Dload  Upload   Total   Spent    Left  Speed
+  334  100  171k  100  171k    0     0   386k      0 --:--:-- --:--:-- --:--:--  386k
+  335    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  336                                   Dload  Upload   Total   Spent    Left  Speed
+  337  100 44136  100 44136    0     0   163k      0 --:--:-- --:--:-- --:--:--  163k
+  338    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  339                                   Dload  Upload   Total   Spent    Left  Speed
+  340  100 59499  100 59499    0     0   251k      0 --:--:-- --:--:-- --:--:--  252k
+  341    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  342                                   Dload  Upload   Total   Spent    Left  Speed
+  343  100  292k  100  292k    0     0   204k      0  0:00:01  0:00:01 --:--:--  204k
+  344    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  345                                   Dload  Upload   Total   Spent    Left  Speed
+  346  100  583k  100  583k    0     0   572k      0  0:00:01  0:00:01 --:--:--  572k
+  347    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  348                                   Dload  Upload   Total   Spent    Left  Speed
+  349  100  114k  100  114k    0     0   196k      0 --:--:-- --:--:-- --:--:--  195k
+  350    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+  351                                   Dload  Upload   Total   Spent    Left  Speed
+  352  100  279k  100  279k    0     0   543k      0 --:--:-- --:--:-- --:--:--  542k
+  353  [urosevim@mc-login2 ~]$ ls -lh ${FASTADIR}
+  354  total 2.0M
+  355  -rw------- 1 urosevim users  19K Feb 21 13:24 ENSTGUG00000003464.fasta
+  356  -rw------- 1 urosevim users  44K Feb 21 13:24 ENSTGUG00000004937.fasta
+  357  -rw------- 1 urosevim users  59K Feb 21 13:24 ENSTGUG00000005002.fasta
+  358  -rw------- 1 urosevim users 280K Feb 21 13:24 ENSTGUG00000007778.fasta
+  359  -rw------- 1 urosevim users  39K Feb 21 13:24 ENSTGUG00000008103.fasta
+  360  -rw------- 1 urosevim users  59K Feb 21 13:24 ENSTGUG00000009734.fasta
+  361  -rw------- 1 urosevim users 140K Feb 21 13:24 ENSTGUG00000010724.fasta
+  362  -rw------- 1 urosevim users 172K Feb 21 13:24 ENSTGUG00000010805.fasta
+  363  -rw------- 1 urosevim users 136K Feb 21 13:24 ENSTGUG00000011998.fasta
+  364  -rw------- 1 urosevim users 293K Feb 21 13:24 ENSTGUG00000013537.fasta
+  365  -rw------- 1 urosevim users 584K Feb 21 13:24 ENSTGUG00000013538.fasta
+  366  -rw------- 1 urosevim users 115K Feb 21 13:24 ENSTGUG00000017547.fasta
+  367  -rw------- 1 urosevim users  27K Feb 21 13:24 ENSTGUG00000023050.fasta
+  368  [urosevim@mc-login2 ~]$ mkdir -p ${MAPPINGDIR}
+  369  fastq-dump --gzip --skip-technical --readids --dumpbase --clip --outdir ${MAPPINGDIR} ${FASTQ}
+  370  -bash: fastq-dump: command not found
+  371  [urosevim@mc-login2 ~]$ ~/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump --version
+  372  /home/urosevim/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump : 3.2.0
+  373  [urosevim@mc-login2 ~]$ ~/sra-tools/sratoolkit.3.2.0-ubuntu64/bin/fastq-dump --gzip --skip-technical --readids --dumpbase --clip --outdir ${MAPPINGDIR} ${FASTQ} 
+  374  Read 2777822 spots for SRR8551562
+  375  Written 2777822 spots for SRR8551562
+  376  [urosevim@mc-login2 ~]$ cat ${FASTADIR}/ENS*.fasta > ${FASTADIR}/${FASTA}.fasta
+  377  [urosevim@mc-login2 ~]$ ls -lh ${MAPPINGDIR}
+  378  total 1.4G
+  379  -rw------- 1 urosevim users 1.4G Feb 21 13:47 SRR8551562.fastq.gz
+  380  [urosevim@mc-login2 ~]$ ls -lh ${FASTADIR}/${FASTA}.fasta
+  381  head ${FASTADIR}/${FASTA}.fasta
+  382  -rw------- 1 urosevim users 2.0M Feb 21 13:58 ./zf/zf_gene_fasta_files/all_zf_genes.fasta
+  383  >ENSTGUG00000003464.2 primary_assembly:bTaeGut1_v1.p:22:5375476:5394253:-1
+  384  GCGCCGGGCGGAGCCGGAGCCGAGCGGAGCCGGTGCCGGGGCGGCTCATTGCGGCGCGGC
+  385  GCGGCGGCAGCATGGCCACCACCGTGCCCTGCACCCGTTTCACCGACGAGTACCAGCTCT
+  386  ACGAGGAGATCGGCAAGTAAGGGCGGCGGCCCCGGCCCCGGCCCCGGCCCCGGGGCGCGG
+  387  CGGGGGCGGGGGGTGCTGCCCGGGGCTCGGGGAGCCGCTCGGTGCAGACGTGACGCATCC
+  388  CCCCCCCCTCCGCCCCCCCCCCGGGATGGGACACCCAGGACTGGCCCCCCCGGTCCCCCC
+  389  CCGGGGACCAGCCCCCCCCAGCCCACCCACCCCCGGGACCGGCCCTGCCCAGCCCCCCCC
+  390  CCCCCCCCGGTACTGCCCTCCCCCCGGTATTGGCCCTGCCCCCCCCAATGGCCCCCACCC
+  391  CTTATACCGCCCCCCTCCCGGGGCCTTCCAGCCCTCCCCGGCAGCCCCGGACCCCTCAGC
+  392  TCCTCGGGGCCCCCCTCCCCACAGCCCCTCCTGGTCCCTGTAGCCCTCTTGTTGCCCATC
+  393  [urosevim@mc-login2 ~]$ minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  394  [M::mm_idx_gen::0.075*1.02] collected minimizers
+  395  [M::mm_idx_gen::0.113*1.52] sorted minimizers
+  396  [M::main::0.113*1.52] loaded/built the index for 13 target sequence(s)
+  397  [M::mm_mapopt_update::0.126*1.47] mid_occ = 10
+  398  [M::mm_idx_stat] kmer size: 15; skip: 5; is_hpc: 0; #seq: 13
+  399  [M::mm_idx_stat::0.137*1.43] distinct minimizers: 661926 (98.98% are singletons); average occurrences: 1.016; average spacing: 2.931; total length: 1971143
+  400  [morecore] insufficient memory
+  401  Aborted (core dumped)
+  402  ls
+  403  cd  pacbio  zf_gene_fasta_files
+  404  cd pacbio
+  405  ls
+  406  cd SRR8551562
+  407  ls
+  408  open SRR8551562.fastq.gz
+  409  ls
+  410  cd ..
+  411  ls
+  412  cd ..
+  413  ls
+  414  cd ..
+  415  ;s
+  416  ls
+  417  cd mm
+  418  ls
+  419  cd mm_gene_fasta_files
+  420  ls
+  421  cd ..
+  422  cd zf
+  423  ls
+  424  cd ..
+  425  ls
+  426  cd zf
+  427  ls
+  428  cd ..
+  429  cd hs
+  430  ls
+  431  cd hs_gene_fasta_files
+  432  ls
+  433  cd ..
+  434  cd zf
+  435  cd ..
+  436  ls
+  437  cd zf
+  438  ls
+  439  cd zf_gene_fasta_files
+  440  ls
+  441  cd ..
+  442  ls
+  443  cd home
+  444  free -h
+  445  ulimit -a
+  446  ulimit -d unlimited
+  447  ulimit -m unlimited
+  448  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  449  ls
+  450  cd ..
+  451  ls
+  452  cd home
+  453  cd ..
+  454  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  455  mkdir -p ${MAPPINGDIR}
+  456  cd home
+  457  mkdir -p ${MAPPINGDIR}
+  458  cd ..
+  459  cd ~
+  460  ls
+  461  DATA=~/data
+  462  ls
+  463  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  464  mkdir -p ${MAPPINGDIR}
+  465  DATA=~/data
+  466  SPECIES="zf"
+  467  FASTQ="SRR8551562"
+  468  PLATFORM="pacbio"
+  469  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  470  FASTA=all_${SPECIES}_genes
+  471  MAPPINGDIR=${DATA}/${SPECIES}/${PLATFORM}/${FASTQ}
+  472  mkdir -p ${MAPPINGDIR}
+  473  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  474  DATA=~
+  475  DATA=~/data
+  476  SPECIES="zf"
+  477  FASTQ="SRR8551562"
+  478  PLATFORM="pacbio"
+  479  FASTADIR=${DATA}/${SPECIES}/${SPECIES}_gene_fasta_files
+  480  FASTA=all_${SPECIES}_genes
+  481  MAPPINGDIR=${DATA}/${SPECIES}/${PLATFORM}/${FASTQ}
+  482  mkdir -p ${FASTADIR} ${MAPPINGDIR}
+  483  # Ako već imaš pojedinačne FASTA fajlove negde (npr. u ~/zf/zf_gene_fasta_files), možeš ih prekopirati:
+  484  cp ~/zf/zf_gene_fasta_files/ENS*.fasta ${FASTADIR}/
+  485  # Ili regeneriši fajl koristeći tvoj prethodni postupak (ako imaš listu ID-jeva):
+  486  for gid in ENSTGUG00000008103 ENSTGUG00000023050 ENSTGUG00000010724 ENSTGUG00000011998 ENSTGUG00000003464 ENSTGUG00000005002 ENSTGUG00000010805 ENSTGUG00000004937 ENSTGUG00000009734 ENSTGUG00000013537 ENSTGUG00000013538 ENSTGUG00000017547 ENSTGUG00000007778; do      curl -H "Content-Type:application/text" "https://rest.ensembl.org/sequence/id/${gid}?content-type=text/x-fasta" > ${FASTADIR}/${gid}.fasta; done
+  487  # Kombinuj ih u jedan fajl:
+  488  cat ${FASTADIR}/ENS*.fasta > ${FASTADIR}/${FASTA}.fasta
+  489  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  490  DATA=~
+  491  mkdir -p /home/urosevim/data/zf/pacbio/SRR8551562
+  492  cp ~/zf/pacbio/SRR8551562/SRR8551562.fastq.gz /home/urosevim/data/zf/pacbio/SRR8551562/
+  493  minimap2 -a -x splice:hq -u f --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  494  minimap2 -a -x splice:hq -u f -K 50M --sam-hit-only ${FASTADIR}/${FASTA}.fasta ${MAPPINGDIR}/${FASTQ}.fastq.gz > ${MAPPINGDIR}/${FASTA}-vs-${FASTQ}.sam
+  495  /home/urosevim/data/zf/pacbio/SRR8551562/all_zf_genes-vs-SRR8551562.sam
+  496  head /home/urosevim/data/zf/pacbio/SRR8551562/all_zf_genes-vs-SRR8551562.sam
+  497  cat ${MAPPINGDIR}/${MAPPING}.sam | samtools view -bS | samtools sort -o ${MAPPINGDIR}/${MAPPING}.bam
+  498  samtools index ${MAPPINGDIR}/${MAPPING}.bam
+  499  samtools flagstats ${MAPPINGDIR}/${MAPPING}.bam
+  500  ls -lh ${MAPPINGDIR}/${MAPPING}
+  501  ls -lh ${MAPPINGDIR}/${MAPPING}.bam
+  502  history
+  503  history > commands.txt
