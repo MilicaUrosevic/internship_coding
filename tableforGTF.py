@@ -85,16 +85,25 @@ for transcript in db.features_of_type("transcript"):
 
             previous_end_phase = end_phase  # Store for the next exon
 
+        # Retrieve exon sequence
+        nucleotide_sequence = "N/A"  # Default value in case of missing data
+        if chromosome in genome_record:
+            genome_seq = genome_record[chromosome].seq
+            nucleotide_sequence = genome_seq[exon_start - 1 : exon_end]  # Extract sequence
+            if strand == "-":
+                nucleotide_sequence = nucleotide_sequence.reverse_complement()  # Reverse complement for negative strand
+
         data.append([
             chromosome, gene_id, transcript_id, strand, exon_id, exon_rank,
-            exon_start, exon_end, cds_start_coord, cds_end_coord, start_phase, end_phase 
+            exon_start, exon_end, cds_start_coord, cds_end_coord, start_phase, end_phase,
+            str(nucleotide_sequence)  # Convert to string
         ])
 
 # Creating a DataFrame
 df = pd.DataFrame(data, columns=[
     "Chromosome", "GeneID", "TranscriptID", "Strand", "ExonID", "ExonRank",
     "ExonRegionStart", "ExonRegionEnd", "GenomicCodingStart", "GenomicCodingEnd",
-    "StartPhase", "EndPhase"
+    "StartPhase", "EndPhase", "NucleotideSequence"
 ])
 
 # Path to save the CSV file
