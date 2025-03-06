@@ -92,22 +92,25 @@ for transcript in db.features_of_type("transcript"):
             nucleotide_sequence = genome_seq[exon_start - 1 : exon_end]  # Extract sequence
             if strand == "-":
                 nucleotide_sequence = nucleotide_sequence.reverse_complement()  # Reverse complement for negative strand
-
+        if strand == "+":
+            strand = 1
+        elif strand == "-":
+            strand = -1
         data.append([
-            chromosome, gene_id, transcript_id, strand, exon_id, exon_rank,
+            "taeniopygia_guttata", gene_id, transcript_id, strand, exon_id, exon_rank,
             exon_start, exon_end, cds_start_coord, cds_end_coord, start_phase, end_phase,
             str(nucleotide_sequence)  # Convert to string
         ])
 
 # Creating a DataFrame
 df = pd.DataFrame(data, columns=[
-    "Chromosome", "GeneID", "TranscriptID", "Strand", "ExonID", "ExonRank",
+    "Species", "GeneID", "TranscriptID", "Strand", "ExonID", "ExonRank",
     "ExonRegionStart", "ExonRegionEnd", "GenomicCodingStart", "GenomicCodingEnd",
     "StartPhase", "EndPhase", "NucleotideSequence"
 ])
 
 # Path to save the CSV file
-output_file = "/Users/milicaurosevic/Desktop/TP53_test/parsed_gtf_corrected.csv"
+output_file = "/Users/milicaurosevic/Desktop/TP53_test/parsed_gtf_corrected1.csv"
 df.to_csv(output_file, index=False)
 
 print(f"Parsing completed. Data has been saved to {output_file}")
