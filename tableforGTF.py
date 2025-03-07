@@ -9,6 +9,9 @@ gtf_file = "/Users/milicaurosevic/Desktop/TP53_test/all_zf_genes-vs-SRR8551562_w
 genome_fasta = "/Users/milicaurosevic/Downloads/Taeniopygia_guttata.bTaeGut1_v1.p.dna.toplevel.fa"
 db_path = "gtf_database.db"
 
+# Specify the target gene_id
+target_gene_id = "ENSTGUG00000013538.2"  # Replace with the specific gene_id
+
 # Load gene_id -> chromosome mapping
 mapping_file = "/Users/milicaurosevic/Desktop/TP53_test/gictionary.txt"
 map_dict = {}
@@ -19,13 +22,6 @@ with open(mapping_file, "r") as f:
             gene_id, chromosome = fields[0].split(".")[0], fields[1]  # Remove version from gene_id
             map_dict[gene_id] = chromosome
 
-# Debug: Print first few entries of the dictionary
-print("Sample of gene_id -> chromosome mapping:")
-for i, (key, value) in enumerate(map_dict.items()):
-    print(f"{key} -> {value}")
-    if i >= 5:  # Print only first 5 for readability
-        break
-
 # Load genome sequence
 genome_record = SeqIO.to_dict(SeqIO.parse(genome_fasta, "fasta"))
 
@@ -35,18 +31,25 @@ try:
 except:
     db = gffutils.create_db(gtf_file, dbfn=db_path, force=True, keep_order=True, merge_strategy="merge", sort_attribute_values=True)
 
+# Dictionary for transcript validation
+transcript_validation = {}
+# Dictionary for exon validation
+exon_validation = {}
+
 # List to store data
 data = []
 # Iterating through transcripts and linking them with CDS regions
 for transcript in db.features_of_type("transcript"):
     gene_id = transcript.chrom  # Move what was in the first column to gene_id
+    if gene_id != target_gene_id:
+        continue  # Skip transcripts that do not match the target gene_id
+    
     transcript_id = transcript.attributes.get("transcript_id", [""])[0]
+    if transcript_id == "":
+        continue  # Skip if transcript_id is empty
+    
     original_gene_id = transcript.attributes.get("gene_id", [""])[0]  # Original incorrect gene_id
     chromosome = map_dict.get(gene_id.split(".")[0], "Unknown")  # Retrieve chromosome from the mapping
-
-    # Debug: Print gene_id and its corresponding chromosome
-    print(f"Processing gene_id: {gene_id}, Assigned chromosome: {chromosome}")
-    
     strand = transcript.strand
 
     # Collect all CDS regions for the given transcript
@@ -56,22 +59,30 @@ for transcript in db.features_of_type("transcript"):
     
     # Sorting CDS regions by start position
     cds_regions.sort()
-
+    
     # Iterating through exons and assigning them CDS start/end values
     previous_end_phase = -1  # Initial value for end_phase
-
+    
     for exon in db.children(transcript, featuretype="exon", order_by="start"):
-        exon_id = exon.id
-        exon_rank = exon.attributes.get("exon_number", [""])[0]
         exon_start, exon_end = exon.start, exon.end  # Take start and end
-        
-        # Finding CDS start and end within this exon
         cds_start_coord, cds_end_coord = np.nan, np.nan
         for cds_start, cds_end in cds_regions:
             if exon_start <= cds_start <= cds_end <= exon_end:
                 cds_start_coord, cds_end_coord = cds_start, cds_end
                 break  # Take only the first one that fits within the exon
-
+        
+        # Unique exon key based on chromosome, strand, CDS start and CDS end
+        exon_key = (chromosome, strand, cds_start_coord, cds_end_coord)
+        
+        # If exon with same attributes already exists, use the first occurrence
+        if exon_key in exon_validation:
+            exon_id = exon_validation[exon_key]
+        else:
+            exon_id = exon.id
+            exon_validation[exon_key] = exon_id
+        
+        exon_rank = exon.attributes.get("exon_number", [""])[0]
+        
         # Calculating start_phase and end_phase
         start_phase = -1
         end_phase = -1
@@ -92,10 +103,10 @@ for transcript in db.features_of_type("transcript"):
             nucleotide_sequence = genome_seq[exon_start - 1 : exon_end]  # Extract sequence
             if strand == "-":
                 nucleotide_sequence = nucleotide_sequence.reverse_complement()  # Reverse complement for negative strand
-        if strand == "+":
-            strand = 1
-        elif strand == "-":
+        if strand == "-":
             strand = -1
+        elif strand == "+":
+            strand = 1
         data.append([
             "taeniopygia_guttata", gene_id, transcript_id, strand, exon_id, exon_rank,
             exon_start, exon_end, cds_start_coord, cds_end_coord, start_phase, end_phase,
@@ -109,8 +120,11 @@ df = pd.DataFrame(data, columns=[
     "StartPhase", "EndPhase", "NucleotideSequence"
 ])
 
+# Remove rows where TranscriptID is empty
+df = df[df["TranscriptID"] != ""]
+
 # Path to save the CSV file
-output_file = "/Users/milicaurosevic/Desktop/TP53_test/parsed_gtf_corrected1.csv"
+output_file = "/Users/milicaurosevic/Desktop/TP53_test/parsed_gtf_corrected_ENSTGUG00000013538.csv"
 df.to_csv(output_file, index=False)
 
 print(f"Parsing completed. Data has been saved to {output_file}")
