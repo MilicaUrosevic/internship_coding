@@ -7,7 +7,7 @@ import numpy as np
 # Define input files
 gtf_file = "/Users/milicaurosevic/Downloads/Taeniopygia_guttata.bTaeGut1_v1.p.113-2.gtf"
 genome_fasta = "/Users/milicaurosevic/Downloads/Taeniopygia_guttata.bTaeGut1_v1.p.dna.toplevel.fa"
-target_gene_id = "ENSTGUG00000008103"
+target_gene_id = "ENSTGUG00000004937"
 
 db_path = "ensembl.db"
 try:
@@ -80,28 +80,43 @@ for exon in db.features_of_type("exon"):
         exon_start, exon_end, cds_start_coord, cds_end_coord, str(exon_sequence)
     ])
 
+#Calculate start and end phase
 
-# Calculate start and end phase
+exon_data.sort(key=lambda x: (x[2], int(x[5])))
 processed_data = []
-previous_end_phase = -1  # initialization for previous end phase
+previous_end_phase = -1 
 
 for i, row in enumerate(exon_data):
     species, gene_id, transcript_id, strand, exon_id, exon_rank, exon_start, exon_end, cds_start, cds_end, seq = row
     start_phase = end_phase = -1  
 
-    #check if it is the last exon of a transcript
+    #check if it is the last or the first exon of a transcript
     is_last_exon = (i == len(exon_data) - 1) or (exon_data[i + 1][2] != transcript_id)
-    
+    is_first_exon = (i == 0) or (exon_data[i - 1][2] != transcript_id)
+
     if cds_start is not None and cds_end is not None and not np.isnan(cds_start) and not np.isnan(cds_end):
         if previous_end_phase == -1:
             start_phase = previous_end_phase
-            end_phase = (int(cds_end) - int(cds_start) + 1) % 3
+            end_phase = (abs(int(cds_end) - int(cds_start)) + 1) % 3
         else:
             start_phase = previous_end_phase
-            end_phase = (int(cds_end) - int(cds_start) + 1 + previous_end_phase) % 3
+            end_phase = (abs(int(cds_end) - int(cds_start)) + 1 + previous_end_phase) % 3
 
         if is_last_exon:
-            end_phase = -1
+            if cds_end == exon_end and strand == 1:
+               end_phase = (abs(int(cds_end) - int(cds_start)) + 1 + previous_end_phase) % 3 
+            elif cds_start == exon_start and strand == -1:
+                end_phase = (abs(int(cds_end) - int(cds_start)) + 1 + previous_end_phase) % 3 
+            else:
+                end_phase = -1
+
+        if is_first_exon:
+            if cds_start == exon_start and strand == 1:
+                start_phase = 0
+            if cds_end == exon_end and strand == -1:
+                start_phase = 0
+            else:
+                start_phase = -1 
 
         previous_end_phase = end_phase
     else:
