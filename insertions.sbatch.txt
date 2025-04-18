@@ -1,0 +1,55 @@
+#!/bin/bash
+#SBATCH --job-name=extract_inserts
+#SBATCH --output=insertions.out
+#SBATCH --error=insertions.err
+#SBATCH --time=04:00:00
+#SBATCH --mem=4G
+#SBATCH --cpus-per-task=1
+
+module load samtools
+
+BAM="SRR8551562.bam"
+CHR="6"
+START_MAX=17336750
+END_MIN=17336760
+OUT="insertions.fasta"
+TMP="tmp_insertions.txt"
+
+> "$TMP"
+
+samtools view "$BAM" "${CHR}:${START_MAX}-${END_MIN}" | while read -r line; do
+    qname=$(echo "$line" | cut -f1)
+    flag=$(echo "$line" | cut -f2)
+    chrom=$(echo "$line" | cut -f3)
+    pos=$(echo "$line" | cut -f4)
+    cigar=$(echo "$line" | cut -f6)
+    seq=$(echo "$line" | cut -f10)
+
+    read_pos=0
+    cigar_remaining="$cigar"
+
+    while [[ $cigar_remaining =~ ^([0-9]+)([MIDNSHP=X]) ]]; do
+        len="${BASH_REMATCH[1]}"
+        op="${BASH_REMATCH[2]}"
+
+        if [[ "$op" == "I" ]]; then
+            ins_seq="${seq:$read_pos:$len}"
+            if [[ $len -ge 20 ]]; then
+                echo ">${chrom}_${pos}_${read_pos}_$((read_pos+len-1))" >> "$TMP"
+                echo "$ins_seq" >> "$TMP"
+            else
+                echo "Skipping insertion of length $len at $chrom:$pos" >> insertions.err
+            fi
+        fi
+
+        if [[ "$op" == "M" || "$op" == "I" || "$op" == "S" || "$op" == "=" || "$op" == "X" ]]; then
+            read_pos=$((read_pos + len))
+        fi
+
+        cigar_remaining="${cigar_remaining#${BASH_REMATCH[0]}}"
+    done
+done
+
+echo "## Insertions found in Chromosome $CHR" > "$OUT"
+cat "$TMP" >> "$OUT"
+rm "$TMP"
