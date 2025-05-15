@@ -15,7 +15,7 @@ records = []
 exon_counter = defaultdict(int)
 
 # Keywords for each tool HAVANA = RNABloom, PacBio_cDNA = IsoTools
-keywords = ["HAVANA", "Bambu", "FLAIR", "PacBio_cDNA"]
+keywords = ["HAVANA", "ENSEMBL", "Bambu", "FLAIR", "PacBio_cDNA"]
 
 with open(gtf_file, "r") as gtf:
     for line in gtf:
