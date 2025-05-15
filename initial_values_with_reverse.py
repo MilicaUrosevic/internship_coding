@@ -14,7 +14,7 @@ genome = SeqIO.to_dict(SeqIO.parse(genome_fasta, "fasta"))
 records = []
 exon_counter = defaultdict(int)
 
-# Keywords for each tool HAVANA = RNABloom, PacBio_cDNA = IsoTools
+# Keywords for each tool HAVANA/ENSEMBL = RNABloom, PacBio_cDNA = IsoTools
 keywords = ["HAVANA", "ENSEMBL", "Bambu", "FLAIR", "PacBio_cDNA"]
 
 with open(gtf_file, "r") as gtf:
