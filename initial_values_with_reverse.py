@@ -4,24 +4,19 @@ import pandas as pd
 from collections import defaultdict
 from Bio import SeqIO
 
-# Input files
 gtf_file = "/home/abakarova/milica/IsoTools/Challenge2/iso_quant_PacBio_cDNA_IsoTools_final/human_simulation_PacBio_cDNA_long/models_ref_info.gtf"
 genome_fasta = "/home/abakarova/milica/human/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
 target_gene_id = "ENSG00000107643.16"
 
-# Load the genome FASTA into a dictionary with chromosome names as keys
+
 genome = SeqIO.to_dict(SeqIO.parse(genome_fasta, "fasta"))
 
-# List to collect extracted exon data
 records = []
-
-# Counter to track exon numbers per transcript
 exon_counter = defaultdict(int)
 
-# Keywords to check in source field (2nd column)
+# Keywords for each tool HAVANA = RNABloom, PacBio_cDNA = IsoTools
 keywords = ["HAVANA", "Bambu", "FLAIR", "PacBio_cDNA"]
 
-# Parse GTF file
 with open(gtf_file, "r") as gtf:
     for line in gtf:
         if line.startswith("#"):
@@ -56,19 +51,18 @@ with open(gtf_file, "r") as gtf:
             transcript_id += f"_{tag_suffix}"
             exon_id += f"_{tag_suffix}"
 
-        # Increment and assign exon rank for this transcript
+        # set ranking 
         exon_counter[transcript_id] += 1
         exon_rank = str(exon_counter[transcript_id])
-
-        # Add transcript_id and exon rank to exon_id
+        # set a unique exon_id
         exon_id += f"_{transcript_id}_{exon_rank}"
 
-        # Extract nucleotide sequence and adjust for strand
+        # get a sequence
         if chrom in genome:
             seq = genome[chrom].seq[start - 1:end]
             if strand == "-":
                 seq = seq.reverse_complement()
-                start, end = end, start  # Swap start and end for consistency
+                start, end = end, start  
             nucleotide_seq = str(seq)
         else:
             nucleotide_seq = "N/A"
@@ -76,7 +70,7 @@ with open(gtf_file, "r") as gtf:
         strand_value = 1 if strand == "+" else -1
 
         records.append([
-            "homo_sapiens",
+            "homo_sapiens", #or whichever the choosen sp is
             gene_id,
             transcript_id,
             strand_value,
@@ -87,7 +81,6 @@ with open(gtf_file, "r") as gtf:
             nucleotide_seq
         ])
 
-# Create DataFrame
 df = pd.DataFrame(records, columns=[
     "Species", "GeneID", "TranscriptID", "Strand", "ExonID", "ExonRank",
     "ExonRegionStart", "ExonRegionEnd", "NucleotideSequence"
@@ -95,9 +88,8 @@ df = pd.DataFrame(records, columns=[
 
 df["ExonRank"] = df["ExonRank"].astype(int)
 
-# Separate positive and negative strands
-df_pos = df[df["Strand"] == 1].sort_values(by=["TranscriptID", "ExonRank"])
 
+df_pos = df[df["Strand"] == 1].sort_values(by=["TranscriptID", "ExonRank"])
 df_neg = df[df["Strand"] == -1].sort_values(by=["TranscriptID", "ExonRank"], ascending=[True, False])
 
 # Update exon ranks and IDs for negative strand
@@ -114,17 +106,13 @@ for transcript_id, group in df_neg.groupby("TranscriptID"):
 if updated_neg:
     df_neg_updated = pd.concat(updated_neg)
 else:
-    # Kreiraj prazan DataFrame sa istim kolonama kao df_neg
     df_neg_updated = pd.DataFrame(columns=df_neg.columns)
 
 
-# Combine all transcripts
 df_final = pd.concat([df_pos, df_neg_updated])
-
-# Final sort (optional)
 df_final = df_final.sort_values(by=["TranscriptID", "ExonRank"])
 
-# Save to CSV
+
 output_csv = os.path.join(os.path.dirname(gtf_file), f"{target_gene_id}_exonsC.csv")
 df_final.to_csv(output_csv, index=False)
 
