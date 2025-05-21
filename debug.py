@@ -6,15 +6,11 @@ This code serves to explain why does it happen and how to prevent it in the futu
 import pandas as pd
 
 def filter_ensmus_rows(file1, file2, output1, output2):
-    # Read the TSV files
+    
     df1 = pd.read_csv(file1, sep='\t', header=None)
     df2 = pd.read_csv(file2, sep='\t', header=None)
-    
-    # Filter rows where the first column starts with 'ENSMUS'
     filtered_df1 = df1[df1[0].astype(str).str.startswith('ENSMUS')]
     filtered_df2 = df2[df2[0].astype(str).str.startswith('ENSMUS')]
-    
-    # Save the filtered data to new TSV files
     filtered_df1.to_csv(output1, sep='\t', index=False, header=False)
     filtered_df2.to_csv(output2, sep='\t', index=False, header=False)
     
@@ -49,9 +45,9 @@ def check_empty_values(file):
         print(f'Empty values found in columns of {file}:')
         print(empty_columns.to_string())
 
-# Example usage
-file1 = '/Users/milicaurosevic/TP53_3/exonstable_copy.tsv'  # before add_transc 
-file2 = '/Users/milicaurosevic/TP53/Ensembl/exonstable.tsv'  # Replace with your actual file name
+
+file1 = '/Users/milicaurosevic/TP53_3/exonstable_copy.tsv'  
+file2 = '/Users/milicaurosevic/TP53/Ensembl/exonstable.tsv' 
 output1 = 'MouseBefore.tsv'
 output2 = 'MouseAfter.tsv'
 
