@@ -1,8 +1,8 @@
 from Bio import Seq
-import re  # koristimo regex biblioteku umesto re
+import re  
 
-# Definišemo start kodon
-startP = re.compile('(?=(ATG))')  # koristi lookahead za preklapanja
+
+startP = re.compile('(?=(ATG))') 
 
 input_seq = """ACCGCCGCGAACATCGCCGAGATCCTGCCGCCGCAGCCGAGCCGGCTGGTCGAGTATGCGCAACGACGCG
 CGTCCGGCAGCATCCCGGCGATCATGGCGCGCTGGGATGCACGCGTACTGCAGGACAACGAACCATTCAC
