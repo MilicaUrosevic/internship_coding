@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 
 ORF = namedtuple("ORF", ["start", "end", "frame"])
 
-def find_orfs(seq, start_codons=["ATG"], stop_codons=["TAA", "TAG", "TGA"], min_length=30): #min_length can be changed
+def find_orfs(seq, start_codons=["ATG"], stop_codons=["TAA", "TAG", "TGA"], min_length=30):
     seq = seq.upper()
     orfs = []
     for frame in range(3):
@@ -33,7 +33,7 @@ def parse_csv(filename):
                 'transcript_id': transcript_id,
                 'strand': row['Strand'],
                 'exon_id': row['ExonID'],
-                'exon_rank': row['ExonRank'],
+                'exon_rank': int(row['ExonRank']),
                 'start': int(row['ExonRegionStart']),
                 'end': int(row['ExonRegionEnd']),
                 'seq': row['NucleotideSequence'].strip().upper(),
@@ -45,6 +45,14 @@ def parse_csv(filename):
             transcripts[transcript_id].append(exon)
 
     for transcript_id, exons in transcripts.items():
+        # descending sort
+        exons.sort(key=lambda x: -x['exon_rank'])
+        # rank update
+        for new_rank, exon in enumerate(exons, 1):
+            exon['exon_rank'] = new_rank
+            # rotate start and end positions
+            exon['start'], exon['end'] = exon['end'], exon['start']
+
         full_seq = ''.join([exon['seq'] for exon in exons])
         transcripts[transcript_id] = {
             'exons': exons,
@@ -69,13 +77,8 @@ def map_orf_to_cds(transcript, orf_start, orf_end):
             offset_start = overlap_start - exon_start_in_transcript
             offset_end = overlap_end - exon_start_in_transcript - 1 
 
-            strand = int(exon['strand'])
-            if strand == 1:
-                cds_start = exon['start'] + offset_start
-                cds_end = exon['start'] + offset_end
-            elif strand == -1:
-                cds_end = exon['end'] - offset_start
-                cds_start = exon['end'] - offset_end
+            cds_start = exon['start'] + offset_start
+            cds_end = exon['start'] + offset_end
 
             exon['cds_start'] = cds_start
             exon['cds_end'] = cds_end
@@ -105,7 +108,7 @@ def calculate_phase(transcript):
             length = abs(cds_end - cds_start) + 1
 
             if exon is first_coding_exon:
-                if (int(exon['strand'])==1 and cds_start == exon['start']) or (int(exon['strand'])==-1 and cds_start == exon['end']):
+                if cds_start == exon['start']:
                     exon['start_phase'] = 0
                 else:
                     exon['start_phase'] = -1
@@ -116,7 +119,7 @@ def calculate_phase(transcript):
                 exon['end_phase'] = (prev_end_phase + length) % 3
                 prev_end_phase = exon['end_phase']
             if exon is last_coding_exon:
-                if (exon['strand']==1 and cds_end == exon['end']) or (exon['strand']==-1 and cds_end == exon['start']):
+                if cds_end == exon['end']:
                     exon['end_phase'] = 0
                 else:
                     exon['end_phase'] = -1
@@ -127,6 +130,7 @@ def calculate_phase(transcript):
             exon['end_phase'] = -1
 
     return exons
+
 def write_csv(transcripts, output_file):
     with open(output_file, 'w', newline='') as f:
         fieldnames = [
@@ -169,4 +173,3 @@ if __name__ == "__main__":
             calculate_phase(transcript)
 
     write_csv(transcripts, output_csv)
-
