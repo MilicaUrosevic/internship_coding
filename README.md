@@ -2,7 +2,7 @@
 
 Repository for my M2 internship project:  
 **Integrating long read data into Evolutionary Splicing Graphs (ESGs)**  
-Supervisors: Elodie Laine (Sorbonne Université), Jean-Stéphane Varré (Université de Lille)
+Supervisors: Elodie Laine (Sorbonne Université / Institut universitaire de France), Jean-Stéphane Varré (Université de Lille) and Arnaud Liehrmann (Sorbonne Université)
 
 ---
 
