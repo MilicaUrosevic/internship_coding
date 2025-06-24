@@ -1,9 +1,34 @@
 # internship_coding
-A place for organized work, mainly focused on ThorAxe. Debugging of the add_transcript.py script. Creating the file that would make a table that add_transcripts.py can read from .gtf and .fa files. 
 
-The chronology: 
-https://docs.google.com/document/d/1OxhlUV_9eUm4WbKAuTlx9qGpcaoWoIEjbdS2Ij4Gi1M/edit?usp=sharing
-https://docs.google.com/document/d/1_bGpRc-GuXGT3dhEhIi44x2K2grpN6l4D26YU_7hhUw/edit?usp=sharing
+Repository for my M2 internship project:  
+**Integrating long read data into Evolutionary Splicing Graphs (ESGs)**  
+Supervisors: Elodie Laine (Sorbonne Université), Jean-Stéphane Varré (Université de Lille)
 
-for 1gene.py file:
-to download whole genome fasta files from ensembl as .gz (whole file) use __curl__ and __gzip__ because otherwise it would download only .fa for the first chromosome.
+---
+
+## Overview
+
+This project explores how long-read transcript predictions can be integrated into Evolutionary Splicing Graphs using the ThorAxe framework.
+
+Key goals:
+- Evaluate long-read transcript prediction tools (FLAIR, Bambu, IsoTools, RNA-Bloom)
+- Develop a module to integrate custom transcript annotations into ThorAxe
+- Assess tool complementarity and their impact on splicing event discovery
+
+---
+
+## Main contributions
+
+- `add_transcripts.py`: A Python module to add user-defined transcript structures to the ThorAxe input.
+- Specification of a strict input CSV format derived from GTF and FASTA files.
+- Comparative analysis of transcript-level and protein-level predictions from four tools.
+- Integration of long-read–predicted isoforms into ESGs for human and mouse datasets.
+
+---
+
+## Usage
+
+Run the module from the command line:
+
+```bash
+python add_transcripts.py path/to/transcripts.csv path/to/gene/Ensembl
